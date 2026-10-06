@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
   <title>Q-System ระบบจองคิวอัจฉริยะ (Pro Max)</title>
 
+  <!-- 📌 เพิ่มโค้ดบรรทัดนี้ลงไป เพื่อเปลี่ยนโลโก้บนแท็บเบราว์เซอร์ -->
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913076.png">
+  
   <!-- Google Fonts: Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -904,12 +908,12 @@
               window.speechSynthesis.cancel();
               
               // 1. แก้คำว่า "ขอเชิญหมายเลข..." และเอาช่องว่างหน้าคำว่า "ค่ะ" ออกเพื่อให้พูดติดกันทันที
-              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter} ค่ะ`;
+              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ค่ะ`;
               
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'th-TH'; 
               utterance.rate = 0.75; 
-              utterance.pitch = 1.2; // ปรับ pitch ให้สูงขึ้นนิดหน่อยเพื่อให้โทนเสียงดูเป็นผู้หญิง/นุ่มนวลขึ้น
+              utterance.pitch = 2; // ปรับ pitch ให้สูงขึ้นนิดหน่อยเพื่อให้โทนเสียงดูเป็นผู้หญิง/นุ่มนวลขึ้น
               
               // 2. ค้นหาและบังคับใช้เสียงภาษาไทยที่มีอยู่ในเครื่อง (ส่วนใหญ่จะเป็นเสียงผู้หญิง)
               const voices = window.speechSynthesis.getVoices();
