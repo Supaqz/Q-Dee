@@ -309,11 +309,14 @@
             if (action === 'CALL') {
               batch.update(db.collection('tickets').doc(ticket.id), { status: "called", calledAt: Date.now() });
             }
+            
+            // 📌 ตรงนี้ไม่ว่าจะกด CALL หรือ RECALL จะทำการอัปเดตสถานะล่าสุดให้จอทีวีเล่นเสียงเหมือนกันแล้วครับ
             batch.set(db.collection('store_status').doc('display'), {
               currentQueue: ticket.queueString,
               counter: activeCounter,
               lastTrigger: Date.now()
             }, { merge: true });
+
           } else if (action === 'SKIP') {
             batch.update(db.collection('tickets').doc(ticket.id), { status: "skipped" });
           }
