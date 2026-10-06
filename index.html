@@ -464,11 +464,12 @@
       const [newCounterName, setNewCounterName] = useState("");
       const [tvHeader, setTvHeader] = useState("");
 
-      // 📌 State สำหรับตำแหน่งขององค์ประกอบ (เพิ่มเข้ามาใหม่)
+      // 📌 State สำหรับตำแหน่งพิกัดทั้งหมด (รวมพื้นที่ว่าง blank1)
       const [floorConfig, setFloorConfig] = useState({
-        nurse: { x: 20, y: 100 },
-        waiting: { x: 400, y: 20 },  // ขยับโซนรอมาตรงกลาง
-        door: { x: 920, y: 20 }      // ขยับประตูขึ้นเกือบบนสุด
+        nurse: { x: 20, y: 20 },
+        waiting: { x: 180, y: 20 },  
+        door: { x: 900, y: 50 },      
+        blank1: { x: 180, y: 150 } // 👈 พื้นที่ว่าง (ช่องเปล่า)
       });
 
       const [draggingId, setDraggingId] = useState(null);
@@ -518,7 +519,8 @@
         if (x < 10) x = 10;
         if (y < 10) y = 10;
 
-        if (draggingId === 'nurse' || draggingId === 'waiting' || draggingId === 'door') {
+        // 📌 อนุญาตให้ลากพื้นที่ว่าง (blank1) ได้
+        if (draggingId === 'nurse' || draggingId === 'waiting' || draggingId === 'door' || draggingId === 'blank1') {
           const updated = { ...floorConfig, [draggingId]: { x, y } };
           setFloorConfig(updated);
           await db.collection('store_status').doc('floor_config').set(updated, { merge: true });
@@ -594,7 +596,7 @@
         e.preventDefault();
         if (!newCounterId || !newCounterName) return setModalMessage("กรุณากรอกเลขโต๊ะและชื่อโต๊ะเจ้าหน้าที่");
         await db.collection('counters').doc(newCounterId.trim()).set({
-          name: newCounterName.trim(), isOpen: true, posX: 50 + (counters.length * 120) % 500, posY: 180
+          name: newCounterName.trim(), isOpen: true, posX: 180 + (counters.length * 150) % 500, posY: 280
         });
         setNewCounterId(""); setNewCounterName("");
         setModalMessage("เพิ่มโต๊ะเจ้าหน้าที่เรียบร้อยแล้ว!");
@@ -669,46 +671,56 @@
               onMouseUp={handleMouseUp}
               className="w-full h-[450px] bg-slate-900 rounded-3xl relative overflow-hidden border-2 border-dashed border-slate-700 shadow-inner p-4"
             >
-              {/* เคาน์เตอร์พยาบาล */}
+              {/* 1. เคาน์เตอร์พยาบาล (ปรับเป็นทรงแนวตั้งยาวๆ ไว้ซ้ายมือ) */}
               <div 
-                onMouseDown={(e) => handleMouseDown(e, 'nurse')}
-                style={{ left: `${floorConfig.nurse.x}px`, top: `${floorConfig.nurse.y}px` }}
-                className="absolute cursor-grab active:cursor-grabbing w-32 bg-teal-950/90 border-2 border-teal-500/60 rounded-2xl flex flex-col items-center justify-center text-teal-200 text-center p-3 shadow-xl select-none"
+                onMouseDown={(e) => { setDraggingId('nurse'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
+                style={{ left: `${floorConfig.nurse?.x || 20}px`, top: `${floorConfig.nurse?.y || 20}px` }}
+                className="absolute cursor-grab active:cursor-grabbing w-28 h-[320px] bg-teal-950/90 border-2 border-teal-500/60 rounded-2xl flex flex-col items-center justify-center text-teal-200 text-center p-3 shadow-xl select-none"
               >
-                <span className="material-icons-round text-3xl mb-1 text-teal-400">local_hospital</span>
-                <span className="font-bold text-xs">เคาน์เตอร์พยาบาล</span>
+                <span className="material-icons-round text-3xl mb-12 text-teal-400">local_hospital</span>
+                <span className="font-bold text-sm -rotate-90 whitespace-nowrap tracking-widest mt-6">เคาน์เตอร์พยาบาล</span>
               </div>
 
-              {/* โซนที่นั่งรอคิว (ขยายขนาด) */}
+              {/* 2. โซนที่นั่งรอคิว (ปรับเป็นทรงแนวนอนยาวมากๆ ไว้ด้านบน) */}
               <div 
-                onMouseDown={(e) => handleMouseDown(e, 'waiting')}
-                style={{ left: `${floorConfig.waiting.x}px`, top: `${floorConfig.waiting.y}px` }}
-                className="absolute cursor-grab active:cursor-grabbing bg-slate-800/90 border-2 border-slate-600 rounded-2xl w-[450px] h-[150px] text-slate-300 text-sm font-semibold flex flex-col items-center justify-center gap-2 shadow-xl select-none"
+                onMouseDown={(e) => { setDraggingId('waiting'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
+                style={{ left: `${floorConfig.waiting?.x || 180}px`, top: `${floorConfig.waiting?.y || 20}px` }}
+                className="absolute cursor-grab active:cursor-grabbing bg-slate-800/90 border-2 border-slate-600 rounded-2xl w-[650px] h-[100px] text-slate-300 text-sm font-semibold flex flex-row items-center justify-center gap-4 shadow-xl select-none"
               >
                 <span className="material-icons-round text-emerald-400 text-4xl">event_seat</span> 
-                <span className="text-lg">โซนที่นั่งรอคิว</span>
+                <span className="text-xl tracking-wider">โซนที่นั่งรอคิว</span>
               </div>
 
-              {/* ประตู */}
+              {/* 3. ประตูทางเข้า (ปรับให้สูงขึ้นเป็นแนวตั้ง) */}
               <div 
-                onMouseDown={(e) => handleMouseDown(e, 'door')}
-                style={{ left: `${floorConfig.door.x}px`, top: `${floorConfig.door.y}px` }}
-                className="absolute cursor-grab active:cursor-grabbing w-10 h-40 bg-amber-500/90 border-2 border-amber-400 rounded-xl flex items-center justify-center text-slate-950 font-bold shadow-xl select-none"
+                onMouseDown={(e) => { setDraggingId('door'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
+                style={{ left: `${floorConfig.door?.x || 900}px`, top: `${floorConfig.door?.y || 50}px` }}
+                className="absolute cursor-grab active:cursor-grabbing w-10 h-[280px] bg-amber-500/90 border-2 border-amber-400 rounded-xl flex items-center justify-center text-slate-950 font-bold shadow-xl select-none"
               >
-                <span className="-rotate-90 whitespace-nowrap text-xs flex items-center gap-1 tracking-widest">
+                <span className="-rotate-90 whitespace-nowrap text-sm flex items-center gap-1 tracking-widest">
                    ประตู
                 </span>
               </div>
 
-              {/* โต๊ะเจ้าหน้าที่ (พร้อมปุ่มกดบนโต๊ะ) */}
+              {/* 4. พื้นที่ว่าง ช่องเปล่า (ลากได้) */}
+              <div 
+                onMouseDown={(e) => { setDraggingId('blank1'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
+                style={{ left: `${floorConfig.blank1?.x || 180}px`, top: `${floorConfig.blank1?.y || 150}px` }}
+                className="absolute cursor-grab active:cursor-grabbing w-32 h-24 bg-slate-200/20 border-2 border-slate-400 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400 shadow-sm select-none hover:bg-slate-200/40 transition"
+              >
+                <span className="material-icons-round text-2xl mb-1 opacity-50">crop_free</span>
+                <span className="font-semibold text-xs">พื้นที่ว่าง</span>
+              </div>
+
+              {/* 5. โต๊ะเจ้าหน้าที่ (พร้อมปุ่มกดบนโต๊ะ) */}
               {counters.map(c => {
                 const posX = c.posX || 200;
-                const posY = c.posY || 180;
+                const posY = c.posY || 280;
                 const isOpen = c.isOpen !== false;
                 return (
                   <div
                     key={c.id}
-                    onMouseDown={(e) => handleMouseDown(e, c.id)}
+                    onMouseDown={(e) => { setDraggingId(c.id); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
                     style={{ left: `${posX}px`, top: `${posY}px` }}
                     className={`absolute cursor-grab active:cursor-grabbing w-44 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-xl border-2 transition-shadow select-none ${isOpen ? 'border-emerald-500' : 'border-rose-400 opacity-80'}`}
                   >
