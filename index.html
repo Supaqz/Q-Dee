@@ -171,7 +171,7 @@
               <div className="animate-fade-in">
                 <button onClick={() => setStep(1)} className="text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 font-medium"><span className="material-icons-round text-sm">arrow_back</span> ย้อนกลับ</button>
                 <h2 className="text-2xl font-bold text-slate-800 mb-2">ระบุชื่อของคุณ</h2>
-                <p className="text-slate-500 mb-6 text-sm">แผนก: <span className="font-semibold text-indigo-600">{selectedCat?.name}</span></p>
+                <p className="text-slate-500 mb-6 text-sm">แผนก: <span className="font-semibold text-indigo-600">{selectedCat && selectedCat.name}</span></p>
                 <form onSubmit={handleReserve} className="space-y-4">
                   <input type="text" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น..." className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-lg bg-slate-50 outline-none" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} autoFocus />
                   <button type="submit" disabled={loading} className="btn-scale w-full bg-slate-800 text-white font-semibold py-4 rounded-2xl text-xl hover:bg-slate-900 transition flex justify-center items-center gap-2 shadow-xl">
@@ -187,8 +187,8 @@
               <div className="animate-fade-in">
                 <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[1.5rem] p-8 mb-6 border border-indigo-100 shadow-inner">
                   <p className="text-indigo-400 font-medium mb-1">หมายเลขคิวของคุณ</p>
-                  <div className="text-7xl font-bold text-indigo-600 my-4 tracking-tighter">{myTicket?.queueString}</div>
-                  <p className="text-sm font-semibold text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full shadow-sm">{myTicket?.categoryName}</p>
+                  <div className="text-7xl font-bold text-indigo-600 my-4 tracking-tighter">{myTicket && myTicket.queueString}</div>
+                  <p className="text-sm font-semibold text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full shadow-sm">{myTicket && myTicket.categoryName}</p>
                 </div>
                 
                 <div className="border border-slate-100 rounded-2xl p-5 text-left space-y-4 bg-white">
