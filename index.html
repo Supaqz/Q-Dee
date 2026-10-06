@@ -909,12 +909,12 @@
           setTimeout(() => {
             if ('speechSynthesis' in window && displayStatus.currentQueue !== "-") {
               window.speechSynthesis.cancel();
-              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ค่ะ`;
+              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ครับ`;
               
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'th-TH'; 
               utterance.rate = 0.70; 
-              utterance.pitch = 10;
+              utterance.pitch = 1.2;
               
               const voices = window.speechSynthesis.getVoices();
               const thaiVoice = voices.find(voice => voice.lang === 'th-TH' || voice.name.includes('Thai'));
