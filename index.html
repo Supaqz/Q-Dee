@@ -140,7 +140,7 @@
       // คำนวณคิวที่รอก่อนหน้าเรา
       let queuesAhead = 0;
       if (myTicket) {
-        queuesAhead = allWaitingTickets.filter(t => t.category === selectedCat?.id && t.createdAt < myTicket.createdAt).length;
+        queuesAhead = allWaitingTickets.filter(t => selectedCat && t.category === selectedCat.id && t.createdAt < myTicket.createdAt).length;
       }
 
       return (
