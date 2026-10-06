@@ -452,8 +452,8 @@
       );
     };
 
-    /* 🛠️ 2.3 หน้าจัดการระบบหลังบ้าน (Manager Panel พร้อม Interactive Floor Plan และ Popup สวยงาม) */
-    const ManagerView = ({ setModalMessage }) => {
+    /* 🛠️ 2.3 หน้าจัดการระบบหลังบ้าน (Manager Panel) */
+    const ManagerView = ({ setModalMessage, setConfirmDialog, setPromptDialog, setPromptValue }) => {
       const [tickets, setTickets] = useState([]);
       const [categories, setCategories] = useState([]);
       const [counters, setCounters] = useState([]);
@@ -464,7 +464,13 @@
       const [newCounterName, setNewCounterName] = useState("");
       const [tvHeader, setTvHeader] = useState("");
 
-      // Dragging state สำหรับจำลองผังห้อง
+      // 📌 State สำหรับตำแหน่งขององค์ประกอบ (เพิ่มเข้ามาใหม่)
+      const [floorConfig, setFloorConfig] = useState({
+        nurse: { x: 20, y: 20 },
+        waiting: { x: 400, y: 20 },  // ขยับโซนรอมาตรงกลาง
+        door: { x: 920, y: 20 }      // ขยับประตูขึ้นเกือบบนสุด
+      });
+
       const [draggingId, setDraggingId] = useState(null);
       const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
@@ -481,23 +487,23 @@
           setCounters(list);
         });
 
+        // โหลดตำแหน่งผังห้องจาก Firebase
+        db.collection('store_status').doc('floor_config').get().then(doc => {
+          if (doc.exists) setFloorConfig(doc.data());
+          else db.collection('store_status').doc('floor_config').set(floorConfig);
+        });
+
         db.collection('store_status').doc('display').get().then(doc => {
-          if (doc.exists && doc.data().tvHeaderTitle) {
-            setTvHeader(doc.data().tvHeaderTitle);
-          }
+          if (doc.exists && doc.data().tvHeaderTitle) setTvHeader(doc.data().tvHeaderTitle);
         });
 
         return () => { unsubTickets(); unsubCats(); unsubCounters(); };
       }, []);
 
-      // ฟังก์ชันลากวางโต๊ะในผังจำลอง
-      const handleMouseDown = (e, counter) => {
-        setDraggingId(counter.id);
+      const handleMouseDown = (e, id) => {
+        setDraggingId(id);
         const rect = e.currentTarget.getBoundingClientRect();
-        setDragOffset({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        });
+        setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
       };
 
       const handleMouseMove = async (e) => {
@@ -512,109 +518,132 @@
         if (x < 10) x = 10;
         if (y < 10) y = 10;
 
-        await db.collection('counters').doc(draggingId).update({
-          posX: x,
-          posY: y
-        }, { merge: true });
-      };
-
-      const handleMouseUp = () => {
-        setDraggingId(null);
-      };
-
-      // จัดการคิว
-      const handleEditName = async (ticketId, currentName) => {
-        const newName = prompt("แก้ไขชื่อลูกค้า:", currentName);
-        if (newName !== null && newName.trim() !== "") {
-          await db.collection('tickets').doc(ticketId).update({ name: newName.trim() });
+        if (draggingId === 'nurse' || draggingId === 'waiting' || draggingId === 'door') {
+          const updated = { ...floorConfig, [draggingId]: { x, y } };
+          setFloorConfig(updated);
+          await db.collection('store_status').doc('floor_config').set(updated, { merge: true });
+        } else {
+          await db.collection('counters').doc(draggingId).update({ posX: x, posY: y }, { merge: true });
         }
       };
 
-      const handleDeleteTicket = async (ticketId) => {
-        if (confirm("ต้องการลบคิวนี้ออกจากระบบใช่หรือไม่?")) {
-          await db.collection('tickets').doc(ticketId).delete();
-        }
+      const handleMouseUp = () => setDraggingId(null);
+
+      // --- ฟังก์ชันจัดการข้อมูล (Popup ใหม่) ---
+      const handleEditName = (ticketId, currentName) => {
+        setPromptValue(currentName);
+        setPromptDialog({
+          message: "แก้ไขชื่อลูกค้า:",
+          onConfirm: async (newName) => {
+            if (newName && newName.trim() !== "") {
+              await db.collection('tickets').doc(ticketId).update({ name: newName.trim() });
+              setModalMessage("แก้ไขชื่อคิวเรียบร้อยแล้ว");
+            }
+          }
+        });
       };
 
-      // จัดการหมวดหมู่ Kiosk
+      const handleDeleteTicket = (ticketId) => {
+        setConfirmDialog({
+          message: "ต้องการลบคิวนี้ออกจากระบบใช่หรือไม่?",
+          onConfirm: async () => {
+            await db.collection('tickets').doc(ticketId).delete();
+            setModalMessage("ลบคิวเรียบร้อยแล้ว");
+          }
+        });
+      };
+
       const handleAddCategory = async (e) => {
         e.preventDefault();
         if (!newCatId || !newCatName) return setModalMessage("กรุณากรอกรหัส (เช่น A) และชื่อบริการ");
         await db.collection('categories').doc(newCatId.toUpperCase()).set({
-          name: newCatName.trim(),
-          isOpen: true,
-          style: 'from-indigo-500 to-blue-600'
+          name: newCatName.trim(), isOpen: true, style: 'from-indigo-500 to-blue-600'
         });
         setNewCatId(""); setNewCatName("");
         setModalMessage("เพิ่มหมวดหมู่บริการเรียบร้อยแล้ว!");
       };
 
-      const handleEditCategory = async (catId, currentName) => {
-        const updatedName = prompt(`แก้ไขชื่อบริการสำหรับหมวด [${catId}]:`, currentName);
-        if (updatedName !== null && updatedName.trim() !== "") {
-          await db.collection('categories').doc(catId).update({ name: updatedName.trim() });
-        }
+      const handleEditCategory = (catId, currentName) => {
+        setPromptValue(currentName);
+        setPromptDialog({
+          message: `แก้ไขชื่อบริการสำหรับหมวด [${catId}]:`,
+          onConfirm: async (updatedName) => {
+            if (updatedName && updatedName.trim() !== "") {
+              await db.collection('categories').doc(catId).update({ name: updatedName.trim() });
+              setModalMessage("แก้ไขชื่อหมวดหมู่เรียบร้อยแล้ว");
+            }
+          }
+        });
       };
 
-      const handleDeleteCategory = async (catId) => {
-        if (confirm(`ต้องการลบแผนก [${catId}] ใช่หรือไม่?`)) {
-          await db.collection('categories').doc(catId).delete();
-        }
+      const handleDeleteCategory = (catId) => {
+        setConfirmDialog({
+          message: `ต้องการลบแผนก [${catId}] ใช่หรือไม่?`,
+          onConfirm: async () => {
+            await db.collection('categories').doc(catId).delete();
+            setModalMessage("ลบแผนกเรียบร้อยแล้ว");
+          }
+        });
       };
 
       const handleToggleCategoryOpen = async (catId, currentStatus) => {
-        const nextStatus = currentStatus === false ? true : false;
-        await db.collection('categories').doc(catId).update({ isOpen: nextStatus });
+        await db.collection('categories').doc(catId).update({ isOpen: !currentStatus });
       };
 
-      // จัดการผังโต๊ะเจ้าหน้าที่ (Counters)
       const handleAddCounter = async (e) => {
         e.preventDefault();
         if (!newCounterId || !newCounterName) return setModalMessage("กรุณากรอกเลขโต๊ะและชื่อโต๊ะเจ้าหน้าที่");
         await db.collection('counters').doc(newCounterId.trim()).set({
-          name: newCounterName.trim(),
-          isOpen: true,
-          posX: 50 + (counters.length * 120) % 500,
-          posY: 100
+          name: newCounterName.trim(), isOpen: true, posX: 50 + (counters.length * 120) % 500, posY: 180
         });
         setNewCounterId(""); setNewCounterName("");
         setModalMessage("เพิ่มโต๊ะเจ้าหน้าที่เรียบร้อยแล้ว!");
       };
 
-      const handleEditCounter = async (counterId, currentName) => {
-        const updatedName = prompt(`แก้ไขชื่อโต๊ะเจ้าหน้าที่ [โต๊ะ ${counterId}]:`, currentName);
-        if (updatedName !== null && updatedName.trim() !== "") {
-          await db.collection('counters').doc(counterId).update({ name: updatedName.trim() });
-        }
+      const handleEditCounter = (counterId, currentName) => {
+        setPromptValue(currentName);
+        setPromptDialog({
+          message: `แก้ไขชื่อโต๊ะเจ้าหน้าที่ [โต๊ะ ${counterId}]:`,
+          onConfirm: async (updatedName) => {
+            if (updatedName && updatedName.trim() !== "") {
+              await db.collection('counters').doc(counterId).update({ name: updatedName.trim() });
+              setModalMessage("แก้ไขชื่อโต๊ะเรียบร้อยแล้ว");
+            }
+          }
+        });
       };
 
-      const handleDeleteCounter = async (counterId) => {
-        if (confirm(`ต้องการลบโต๊ะที่ ${counterId} ออกจากผังใช่หรือไม่?`)) {
-          await db.collection('counters').doc(counterId).delete();
-        }
+      const handleDeleteCounter = (counterId) => {
+        setConfirmDialog({
+          message: `ต้องการลบโต๊ะที่ ${counterId} ออกจากผังใช่หรือไม่?`,
+          onConfirm: async () => {
+            await db.collection('counters').doc(counterId).delete();
+            setModalMessage("ลบโต๊ะเรียบร้อยแล้ว");
+          }
+        });
       };
 
       const handleToggleCounterOpen = async (counterId, currentStatus) => {
-        const nextStatus = currentStatus === false ? true : false;
-        await db.collection('counters').doc(counterId).update({ isOpen: nextStatus });
+        await db.collection('counters').doc(counterId).update({ isOpen: !currentStatus });
       };
 
       const handleSaveTvHeader = async () => {
-        await db.collection('store_status').doc('display').set({
-          tvHeaderTitle: tvHeader.trim()
-        }, { merge: true });
+        await db.collection('store_status').doc('display').set({ tvHeaderTitle: tvHeader.trim() }, { merge: true });
         setModalMessage("บันทึกแถบหัวข้อจอแสดงผล (TV) เรียบร้อยแล้ว!");
       };
 
-      const handleResetQueue = async () => {
-        if (confirm("⚠️ คำเตือน: การรีเซ็ตจะล้างข้อมูลคิวทั้งหมดของวันนี้ ต้องการดำเนินการต่อหรือไม่?")) {
-          const batch = db.batch();
-          const snapshot = await db.collection('tickets').get();
-          snapshot.forEach(doc => batch.delete(doc.ref));
-          batch.set(db.collection('store_status').doc('display'), { currentQueue: "-", counter: "1", lastTrigger: 0 }, { merge: true });
-          await batch.commit();
-          setModalMessage("ล้างข้อมูลคิวทั้งหมดเรียบร้อยแล้ว!");
-        }
+      const handleResetQueue = () => {
+        setConfirmDialog({
+          message: "⚠️ คำเตือน: การรีเซ็ตจะล้างข้อมูลคิวทั้งหมดของวันนี้ ข้อมูลที่ถูกลบจะไม่สามารถกู้คืนได้ ต้องการดำเนินการต่อหรือไม่?",
+          onConfirm: async () => {
+            const batch = db.batch();
+            const snapshot = await db.collection('tickets').get();
+            snapshot.forEach(doc => batch.delete(doc.ref));
+            batch.set(db.collection('store_status').doc('display'), { currentQueue: "-", counter: "1", lastTrigger: 0 }, { merge: true });
+            await batch.commit();
+            setModalMessage("ล้างข้อมูลคิวทั้งหมดของวันนี้เรียบร้อยแล้ว!");
+          }
+        });
       };
 
       return (
@@ -626,7 +655,6 @@
             <p className="text-slate-500">จัดการผังโต๊ะเจ้าหน้าที่แบบจำลองห้อง, หมวดหมู่บริการ Kiosk, หัวข้อจอทีวี และจัดการข้อมูลคิว</p>
           </div>
 
-          {/* 🗺️ โซนจำลองผังห้อง Interactive Floor Plan */}
           <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-slate-100">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -639,38 +667,66 @@
               id="floor-plan-area" 
               onMouseMove={handleMouseMove} 
               onMouseUp={handleMouseUp}
-              className="w-full h-[400px] bg-slate-900 rounded-3xl relative overflow-hidden border-2 border-dashed border-slate-700 shadow-inner p-4"
+              className="w-full h-[450px] bg-slate-900 rounded-3xl relative overflow-hidden border-2 border-dashed border-slate-700 shadow-inner p-4"
             >
-              {/* โซนจำลองเคาน์เตอร์พยาบาลด้านซ้าย */}
-              <div className="absolute left-6 top-10 bottom-10 w-28 bg-teal-950/80 border border-teal-500/40 rounded-2xl flex flex-col items-center justify-center text-teal-200 text-center p-3 shadow-lg select-none">
-                <span className="material-icons-round text-3xl mb-2 text-teal-400">local_hospital</span>
-                <span className="font-bold text-sm">เคาน์เตอร์พยาบาล</span>
+              {/* เคาน์เตอร์พยาบาล */}
+              <div 
+                onMouseDown={(e) => handleMouseDown(e, 'nurse')}
+                style={{ left: `${floorConfig.nurse.x}px`, top: `${floorConfig.nurse.y}px` }}
+                className="absolute cursor-grab active:cursor-grabbing w-32 bg-teal-950/90 border-2 border-teal-500/60 rounded-2xl flex flex-col items-center justify-center text-teal-200 text-center p-3 shadow-xl select-none"
+              >
+                <span className="material-icons-round text-3xl mb-1 text-teal-400">local_hospital</span>
+                <span className="font-bold text-xs">เคาน์เตอร์พยาบาล</span>
               </div>
 
-              <div className="absolute right-6 top-6 bg-slate-800/80 border border-slate-700 rounded-2xl px-8 py-4 text-slate-300 text-sm font-semibold flex items-center gap-2 select-none">
-                <span className="material-icons-round text-emerald-400">event_seat</span> โซนที่นั่งรอคิว
+              {/* โซนที่นั่งรอคิว (ขยายขนาด) */}
+              <div 
+                onMouseDown={(e) => handleMouseDown(e, 'waiting')}
+                style={{ left: `${floorConfig.waiting.x}px`, top: `${floorConfig.waiting.y}px` }}
+                className="absolute cursor-grab active:cursor-grabbing bg-slate-800/90 border-2 border-slate-600 rounded-2xl w-[450px] h-[150px] text-slate-300 text-sm font-semibold flex flex-col items-center justify-center gap-2 shadow-xl select-none"
+              >
+                <span className="material-icons-round text-emerald-400 text-4xl">event_seat</span> 
+                <span className="text-lg">โซนที่นั่งรอคิว</span>
               </div>
 
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-40 bg-amber-500/80 rounded-l-xl flex items-center justify-center text-[10px] font-bold text-slate-950 select-none">
-                ประตู
+              {/* ประตู */}
+              <div 
+                onMouseDown={(e) => handleMouseDown(e, 'door')}
+                style={{ left: `${floorConfig.door.x}px`, top: `${floorConfig.door.y}px` }}
+                className="absolute cursor-grab active:cursor-grabbing w-10 h-40 bg-amber-500/90 border-2 border-amber-400 rounded-xl flex items-center justify-center text-slate-950 font-bold shadow-xl select-none"
+              >
+                <span className="-rotate-90 whitespace-nowrap text-xs flex items-center gap-1 tracking-widest">
+                   ประตู
+                </span>
               </div>
 
+              {/* โต๊ะเจ้าหน้าที่ (พร้อมปุ่มกดบนโต๊ะ) */}
               {counters.map(c => {
-                const posX = c.posX || 160;
-                const posY = c.posY || 150;
+                const posX = c.posX || 200;
+                const posY = c.posY || 180;
                 const isOpen = c.isOpen !== false;
                 return (
                   <div
                     key={c.id}
-                    onMouseDown={(e) => handleMouseDown(e, c)}
+                    onMouseDown={(e) => handleMouseDown(e, c.id)}
                     style={{ left: `${posX}px`, top: `${posY}px` }}
-                    className={`absolute cursor-grab active:cursor-grabbing w-36 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-xl border-2 transition-shadow select-none ${isOpen ? 'border-emerald-500' : 'border-rose-400 opacity-60'}`}
+                    className={`absolute cursor-grab active:cursor-grabbing w-44 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-xl border-2 transition-shadow select-none ${isOpen ? 'border-emerald-500' : 'border-rose-400 opacity-80'}`}
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-bold text-slate-800 text-sm">โต๊ะ {c.id}</span>
-                      <span className={`w-2.5 h-2.5 rounded-full ${isOpen ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                    <div className="flex justify-between items-start mb-1">
+                      <div>
+                        <span className="font-bold text-slate-800 text-sm block">โต๊ะ {c.id}</span>
+                        <span className="text-[10px] text-slate-500 truncate block w-20">{c.name}</span>
+                      </div>
+                      <button 
+                        onMouseDown={(e) => e.stopPropagation()} 
+                        onClick={() => handleToggleCounterOpen(c.id, isOpen)}
+                        className={`flex flex-col items-center justify-center px-2.5 py-1.5 rounded-lg border shadow-sm transition-transform hover:scale-105 ${isOpen ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}
+                        title="กดเพื่อเปิด/ปิดรับคิว"
+                      >
+                         <span className={`w-3 h-3 rounded-full mb-1 ${isOpen ? 'bg-emerald-500 animate-pulse-fast' : 'bg-rose-500'}`}></span>
+                         <span className="text-[9px] font-extrabold leading-none">{isOpen ? 'เปิดรับ' : 'ปิดคิว'}</span>
+                      </button>
                     </div>
-                    <p className="text-[11px] text-slate-500 truncate">{c.name}</p>
                   </div>
                 );
               })}
@@ -698,14 +754,11 @@
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-700 bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg">โต๊ะ {c.id}</span>
                           <span className="font-medium text-slate-600">{c.name}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                             {isOpen ? 'เปิด' : 'ปิด'}
+                          </span>
                         </div>
-                        <div className="flex gap-2 items-center">
-                          <button 
-                            onClick={() => handleToggleCounterOpen(c.id, isOpen)} 
-                            className={`px-3 py-1 rounded-lg text-xs font-bold ${isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}
-                          >
-                            {isOpen ? '🟢 เปิด' : '🔴 ปิด'}
-                          </button>
+                        <div className="flex gap-3 items-center">
                           <button onClick={() => handleEditCounter(c.id, c.name)} className="text-amber-600 font-bold text-sm hover:underline">แก้ไข</button>
                           <button onClick={() => handleDeleteCounter(c.id)} className="text-rose-500 font-bold text-sm hover:underline">ลบ</button>
                         </div>
@@ -896,7 +949,12 @@
       const [displayStatus, setDisplayStatus] = useState({ currentQueue: "-", counter: "1", lastTrigger: 0 });
       const [waitingTickets, setWaitingTickets] = useState([]);
       const [calledTickets, setCalledTickets] = useState([]);
-      const [modalMessage, setModalMessage] = useState(null); // 📌 เพิ่มบรรทัดนี้
+      
+      // 📌 State สำหรับควบคุม Popup รูปแบบต่างๆ ทั้งหมด
+      const [modalMessage, setModalMessage] = useState(null); 
+      const [confirmDialog, setConfirmDialog] = useState(null); 
+      const [promptDialog, setPromptDialog] = useState(null);
+      const [promptValue, setPromptValue] = useState("");
 
       useEffect(() => {
         const unsubStore = db.collection('store_status').doc('display').onSnapshot(doc => {
@@ -937,13 +995,20 @@
           <main className="flex-1 px-4 flex flex-col justify-center">
             {view === 'kiosk' && <CustomerView displayStatus={displayStatus} allWaitingTickets={waitingTickets} />}
             {view === 'admin' && <AdminView displayStatus={displayStatus} waitingTickets={waitingTickets} calledTickets={calledTickets} />}
-            {view === 'manager' && <ManagerView setModalMessage={setModalMessage} />} {/* 📌 ส่ง props ไป */}
+            {view === 'manager' && (
+              <ManagerView 
+                setModalMessage={setModalMessage} 
+                setConfirmDialog={setConfirmDialog} 
+                setPromptDialog={setPromptDialog} 
+                setPromptValue={setPromptValue} 
+              />
+            )}
             {view === 'tv' && <DisplayView displayStatus={displayStatus} waitingTickets={waitingTickets} />}
           </main>
 
-          {/* 📌 นำ Popup มาไว้ที่นี่ เพื่อให้อยู่บนสุดของหน้าจอเสมอ */}
+          {/* 📌 1. Popup แจ้งเตือนทั่วไป (แทน alert) */}
           {modalMessage && (
-            <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
                 <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="material-icons-round text-3xl">info</span>
@@ -956,6 +1021,58 @@
               </div>
             </div>
           )}
+
+          {/* 📌 2. Popup สำหรับการยืนยัน ลบ/รีเซ็ต (แทน confirm) */}
+          {confirmDialog && (
+            <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
+              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+                <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="material-icons-round text-3xl">warning</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">ยืนยันการดำเนินการ</h3>
+                <p className="text-slate-600 mb-6">{confirmDialog.message}</p>
+                <div className="flex gap-3">
+                  <button onClick={() => setConfirmDialog(null)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition">
+                    ยกเลิก
+                  </button>
+                  <button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="flex-1 bg-rose-600 text-white font-bold py-3.5 rounded-xl hover:bg-rose-700 transition shadow-lg">
+                    ตกลง
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 📌 3. Popup สำหรับกรอกข้อความ แก้ไขข้อมูล (แทน prompt) */}
+          {promptDialog && (
+            <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
+              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+                <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="material-icons-round text-3xl">edit</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">ระบุข้อมูล</h3>
+                <p className="text-slate-600 mb-4">{promptDialog.message}</p>
+                <form onSubmit={(e) => { e.preventDefault(); promptDialog.onConfirm(promptValue); setPromptDialog(null); }}>
+                  <input 
+                    type="text" 
+                    className="w-full p-3.5 border border-slate-200 rounded-xl outline-none text-lg mb-6 text-center focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition bg-slate-50 font-medium"
+                    value={promptValue}
+                    onChange={(e) => setPromptValue(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setPromptDialog(null)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition">
+                      ยกเลิก
+                    </button>
+                    <button type="submit" className="flex-1 bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg">
+                      บันทึก
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
         </div>
       );
     };
