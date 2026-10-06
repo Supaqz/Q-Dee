@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจองคิวออนไลน์ (Real-time Queue)</title>
+
+  <!-- Google Fonts: Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Material Icons (Round) -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Prompt', 'sans-serif'] },
+          animation: { 'fade-in': 'fadeIn 0.4s ease-out forwards' },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & Babel (UMD/CDN) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <!-- Firebase v10 Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body { background-color: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ==========================================
+    // 1. Firebase Initialization
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyB1vBRTD1namUalMXFB7cPhWwdZFONZ-yI",
+  authDomain: "q-dee-v-1.firebaseapp.com",
+  projectId: "q-dee-v-1",
+  storageBucket: "q-dee-v-1.firebasestorage.app",
+  messagingSenderId: "735028566995",
+  appId: "1:735028566995:web:ee102df3aa20dc69042d26",
+  measurementId: "G-LX6G6VEWQW"
+};
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    // ==========================================
+    // 2. Components
+    // ==========================================
+
+    // --- Customer View ---
+    const CustomerView = ({ currentQueue }) => {
+      const [name, setName] = useState("");
+      const [loading, setLoading] = useState(false);
+
+      const handleReserve = async (e) => {
+        e.preventDefault();
+        if (!name.trim()) return alert("กรุณาระบุชื่อของคุณ");
+        setLoading(true);
+
+        try {
+          // ดึงหมายเลขคิวล่าสุดเพื่อนำมาบวก 1
+          const snapshot = await db.collection('tickets')
+            .orderBy('queueNumber', 'desc')
+            .limit(1)
+            .get();
+          
+          let newQueueNumber = 1;
+          if (!snapshot.empty) {
+            newQueueNumber = snapshot.docs[0].data().queueNumber + 1;
+          }
+
+          // บันทึกคิวใหม่ลง Firestore
+          await db.collection('tickets').add({
+            name: name.trim(),
+            queueNumber: newQueueNumber,
+            status: "waiting",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          alert(`จองคิวสำเร็จ!\nหมายเลขคิวของคุณคือ: ${newQueueNumber}`);
+          setName("");
+        } catch (error) {
+          console.error("Error reserving queue:", error);
+          alert("เกิดข้อผิดพลาดในการจองคิว");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="animate-fade-in w-full max-w-md mx-auto">
+          <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+            <h2 className="text-gray-500 font-medium mb-2">คิวที่กำลังเรียกขณะนี้</h2>
+            <div className="text-8xl font-bold text-indigo-600 mb-8 tracking-tighter">
+              {currentQueue || "0"}
+            </div>
+            
+            <form onSubmit={handleReserve} className="space-y-4">
+              <div>
+                <input
+                  type="text"
+                  placeholder="พิมพ์ชื่อของคุณที่นี่..."
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 text-white font-semibold py-4 rounded-xl text-xl hover:bg-indigo-700 transition duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {loading ? (
+                  <span className="material-icons-round animate-spin">refresh</span>
+                ) : (
+                  <span className="material-icons-round">how_to_reg</span>
+                )}
+                {loading ? "กำลังดำเนินการ..." : "จองคิว"}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    // --- Admin View ---
+    const AdminView = ({ currentQueue, tickets }) => {
+      const handleCallQueue = async (ticket) => {
+        try {
+          // ใช้ Batch เพื่ออัปเดต 2 Collection พร้อมกัน
+          const batch = db.batch();
+          
+          const mainCounterRef = db.collection('store_status').doc('main_counter');
+          batch.set(mainCounterRef, { currentQueue: ticket.queueNumber }, { merge: true });
+
+          const ticketRef = db.collection('tickets').doc(ticket.id);
+          batch.update(ticketRef, { status: "called" });
+
+          await batch.commit();
+        } catch (error) {
+          console.error("Error calling queue:", error);
+          alert("เกิดข้อผิดพลาดในการเรียกคิว");
+        }
+      };
+
+      return (
+        <div className="animate-fade-in w-full max-w-2xl mx-auto flex flex-col md:flex-row gap-6">
+          {/* Status Panel */}
+          <div className="bg-white p-6 rounded-2xl shadow-md text-center flex-1 md:w-1/3 h-fit">
+            <h2 className="text-gray-500 font-medium mb-2">คิวปัจจุบัน</h2>
+            <div className="text-6xl font-bold text-indigo-600 mb-2">
+              {currentQueue || "0"}
+            </div>
+            <p className="text-sm text-gray-400">รอรับบริการ: {tickets.length} คิว</p>
+          </div>
+
+          {/* Ticket List Panel */}
+          <div className="bg-white p-6 rounded-2xl shadow-md flex-1 md:w-2/3">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="material-icons-round text-indigo-500">list_alt</span>
+              รายการคิวที่รอ
+            </h2>
+            
+            {tickets.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">
+                <span className="material-icons-round text-4xl mb-2">check_circle</span>
+                <p>ไม่มีคิวรอในขณะนี้</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tickets.map(ticket => (
+                  <div key={ticket.id} className="flex items-center justify-between p-4 border border-gray-100 bg-gray-50 rounded-xl">
+                    <div>
+                      <div className="text-2xl font-bold text-gray-800">#{ticket.queueNumber}</div>
+                      <div className="text-sm text-gray-500">ชื่อ: {ticket.name}</div>
+                    </div>
+                    <button
+                      onClick={() => handleCallQueue(ticket)}
+                      className="bg-emerald-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-emerald-600 transition flex items-center gap-1"
+                    >
+                      <span className="material-icons-round text-sm">campaign</span>
+                      เรียกคิว
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    // --- Main App ---
+    const App = () => {
+      const [view, setView] = useState("customer"); // 'customer' | 'admin'
+      const [currentQueue, setCurrentQueue] = useState(0);
+      const [tickets, setTickets] = useState([]);
+
+      useEffect(() => {
+        // 1. Subscribe to main counter
+        const unsubCounter = db.collection('store_status').doc('main_counter')
+          .onSnapshot(doc => {
+            if (doc.exists) {
+              setCurrentQueue(doc.data().currentQueue);
+            }
+          });
+
+        // 2. Subscribe to waiting tickets
+        const unsubTickets = db.collection('tickets')
+          .where('status', '==', 'waiting')
+          .onSnapshot(snapshot => {
+            const fetchedTickets = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            // จัดเรียงคิวจากน้อยไปมากที่ฝั่ง Client เพื่อเลี่ยงการสร้าง Composite Index ใน Firebase
+            fetchedTickets.sort((a, b) => a.queueNumber - b.queueNumber);
+            setTickets(fetchedTickets);
+          });
+
+        return () => {
+          unsubCounter();
+          unsubTickets();
+        };
+      }, []);
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          {/* Navbar */}
+          <nav className="bg-white shadow-sm mb-8">
+            <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+              <div className="font-bold text-xl text-indigo-600 flex items-center gap-2">
+                <span className="material-icons-round">local_activity</span>
+                Q-System
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setView('customer')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${view === 'customer' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:bg-gray-100'}`}
+                >
+                  หน้าลูกค้า
+                </button>
+                <button
+                  onClick={() => setView('admin')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${view === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:bg-gray-100'}`}
+                >
+                  หน้าพนักงาน
+                </button>
+              </div>
+            </div>
+          </nav>
+
+          {/* Main Content */}
+          <main className="flex-1 px-4 pb-8">
+            {view === 'customer' ? (
+              <CustomerView currentQueue={currentQueue} />
+            ) : (
+              <AdminView currentQueue={currentQueue} tickets={tickets} />
+            )}
+          </main>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
