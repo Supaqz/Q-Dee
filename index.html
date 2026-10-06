@@ -876,7 +876,7 @@
     };
 
     /* 📺 2.4 จอแสดงผลทีวี (TV Display) */
-    const DisplayView = ({ displayStatus, waitingTickets }) => {
+    const DisplayView = ({ displayStatus, waitingTickets, hideNavbar, setHideNavbar }) => {
       const [isStarted, setIsStarted] = useState(false);
       const lastPlayedRef = useRef(0);
       const [headerTitle, setHeaderTitle] = useState("ระบบคิวอัตโนมัติ Real-time Q-System");
