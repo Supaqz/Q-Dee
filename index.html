@@ -908,12 +908,12 @@
               window.speechSynthesis.cancel();
               
               // 1. แก้คำว่า "ขอเชิญหมายเลข..." และเอาช่องว่างหน้าคำว่า "ค่ะ" ออกเพื่อให้พูดติดกันทันที
-              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ค่ะ`;
+              const text = `ขอเชิญหมายเลข  ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการ  ${displayStatus.counter}ค่ะ`;
               
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'th-TH'; 
               utterance.rate = 0.75; 
-              utterance.pitch = 2; // ปรับ pitch ให้สูงขึ้นนิดหน่อยเพื่อให้โทนเสียงดูเป็นผู้หญิง/นุ่มนวลขึ้น
+              utterance.pitch = 5; // ปรับ pitch ให้สูงขึ้นนิดหน่อยเพื่อให้โทนเสียงดูเป็นผู้หญิง/นุ่มนวลขึ้น
               
               // 2. ค้นหาและบังคับใช้เสียงภาษาไทยที่มีอยู่ในเครื่อง (ส่วนใหญ่จะเป็นเสียงผู้หญิง)
               const voices = window.speechSynthesis.getVoices();
