@@ -902,9 +902,9 @@
           setTimeout(() => {
             if ('speechSynthesis' in window && displayStatus.currentQueue !== "-") {
               window.speechSynthesis.cancel();
-              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter} ค่ะ`;
+              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ค่ะ`;
               const utterance = new SpeechSynthesisUtterance(text);
-              utterance.lang = 'th-TH'; utterance.rate = 0.85; utterance.pitch = 1.1;
+              utterance.lang = 'th-TH'; utterance.rate = 0.80; utterance.pitch = 1.1;
               window.speechSynthesis.speak(utterance);
             }
           }, 1500);
