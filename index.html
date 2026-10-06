@@ -674,7 +674,7 @@
               {/* 1. เคาน์เตอร์พยาบาล (ปรับเป็นทรงแนวตั้งยาวๆ ไว้ซ้ายมือ) */}
               <div 
                 onMouseDown={(e) => { setDraggingId('nurse'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
-                style={{ left: `${floorConfig.nurse?.x || 20}px`, top: `${floorConfig.nurse?.y || 20}px` }}
+                style={{ left: `${floorConfig.nurse ? floorConfig.nurse.x : 20}px`, top: `${floorConfig.nurse ? floorConfig.nurse.y : 20}px` }}
                 className="absolute cursor-grab active:cursor-grabbing w-28 h-[320px] bg-teal-950/90 border-2 border-teal-500/60 rounded-2xl flex flex-col items-center justify-center text-teal-200 text-center p-3 shadow-xl select-none"
               >
                 <span className="material-icons-round text-3xl mb-12 text-teal-400">local_hospital</span>
@@ -684,7 +684,7 @@
               {/* 2. โซนที่นั่งรอคิว (ปรับเป็นทรงแนวนอนยาวมากๆ ไว้ด้านบน) */}
               <div 
                 onMouseDown={(e) => { setDraggingId('waiting'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
-                style={{ left: `${floorConfig.waiting?.x || 180}px`, top: `${floorConfig.waiting?.y || 20}px` }}
+                style={{ left: `${floorConfig.waiting ? floorConfig.waiting.x : 180}px`, top: `${floorConfig.waiting ? floorConfig.waiting.y : 20}px` }}
                 className="absolute cursor-grab active:cursor-grabbing bg-slate-800/90 border-2 border-slate-600 rounded-2xl w-[650px] h-[100px] text-slate-300 text-sm font-semibold flex flex-row items-center justify-center gap-4 shadow-xl select-none"
               >
                 <span className="material-icons-round text-emerald-400 text-4xl">event_seat</span> 
@@ -694,7 +694,7 @@
               {/* 3. ประตูทางเข้า (ปรับให้สูงขึ้นเป็นแนวตั้ง) */}
               <div 
                 onMouseDown={(e) => { setDraggingId('door'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
-                style={{ left: `${floorConfig.door?.x || 900}px`, top: `${floorConfig.door?.y || 50}px` }}
+                style={{ left: `${floorConfig.door ? floorConfig.door.x : 900}px`, top: `${floorConfig.door ? floorConfig.door.y : 50}px` }}
                 className="absolute cursor-grab active:cursor-grabbing w-10 h-[280px] bg-amber-500/90 border-2 border-amber-400 rounded-xl flex items-center justify-center text-slate-950 font-bold shadow-xl select-none"
               >
                 <span className="-rotate-90 whitespace-nowrap text-sm flex items-center gap-1 tracking-widest">
@@ -705,7 +705,7 @@
               {/* 4. พื้นที่ว่าง ช่องเปล่า (ลากได้) */}
               <div 
                 onMouseDown={(e) => { setDraggingId('blank1'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
-                style={{ left: `${floorConfig.blank1?.x || 180}px`, top: `${floorConfig.blank1?.y || 150}px` }}
+                style={{ left: `${floorConfig.blank1 ? floorConfig.blank1.x : 180}px`, top: `${floorConfig.blank1 ? floorConfig.blank1.y : 150}px` }}
                 className="absolute cursor-grab active:cursor-grabbing w-32 h-24 bg-slate-200/20 border-2 border-slate-400 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400 shadow-sm select-none hover:bg-slate-200/40 transition"
               >
                 <span className="material-icons-round text-2xl mb-1 opacity-50">crop_free</span>
