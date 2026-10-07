@@ -173,15 +173,15 @@
       };
 
       return (
-        <div className="animate-fade-in w-full max-w-md mx-auto pt-10 pb-10">
-          <div className="glass-card p-10 rounded-[2rem] text-center relative">
+        <div className="animate-fade-in w-full max-w-md mx-auto pt-4 md:pt-10 pb-10">
+          <div className="glass-card p-6 sm:p-10 rounded-[2rem] text-center relative">
             {step === 1 && (
               <div className="animate-fade-in">
                 <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="material-icons-round text-3xl">touch_app</span>
                 </div>
-                <h1 className="text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับ</h1>
-                <p className="text-slate-500 mb-8 font-light">กรุณาเลือกบริการที่ต้องการ</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับ</h1>
+                <p className="text-slate-500 mb-8 font-light text-sm sm:text-base">กรุณาเลือกบริการที่ต้องการ</p>
                 {categories.length === 0 ? (
                   <p className="text-slate-400 py-6">ยังไม่มีหมวดหมู่บริการในระบบ</p>
                 ) : (
@@ -193,14 +193,14 @@
                           key={cat.id} 
                           onClick={() => isOpen && handleSelectCategory(cat)} 
                           disabled={!isOpen}
-                          className={`btn-scale w-full bg-gradient-to-r ${cat.style || 'from-indigo-500 to-blue-600'} text-white text-xl font-semibold py-5 rounded-2xl flex items-center justify-between px-6 shadow-lg ${!isOpen ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                          className={`btn-scale w-full bg-gradient-to-r ${cat.style || 'from-indigo-500 to-blue-600'} text-white text-lg sm:text-xl font-semibold py-4 sm:py-5 rounded-2xl flex items-center justify-between px-4 sm:px-6 shadow-lg ${!isOpen ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                         >
-                          <div className="flex items-center gap-4">
-                            <span className="bg-white/20 px-3 py-1 rounded-lg text-2xl">{cat.id}</span> 
+                          <div className="flex items-center gap-3 sm:gap-4">
+                            <span className="bg-white/20 px-3 py-1 rounded-lg text-xl sm:text-2xl">{cat.id}</span> 
                             <span>{cat.name}</span>
                           </div>
-                          <span className="text-sm font-normal bg-black/20 px-3 py-1 rounded-full">
-                            {isOpen ? 'เปิดบริการ' : 'ปิดชั่วคราว'}
+                          <span className="text-xs sm:text-sm font-normal bg-black/20 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
+                            {isOpen ? 'เปิดบริการ' : 'ปิด'}
                           </span>
                         </button>
                       );
@@ -229,43 +229,43 @@
               <div className="animate-fade-in">
                 <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[1.5rem] p-6 mb-6 border border-indigo-100 shadow-inner">
                   <p className="text-indigo-400 font-medium mb-1">หมายเลขคิวของคุณ</p>
-                  <div className="text-7xl font-bold text-indigo-600 my-3 tracking-tighter">{myTicketData && myTicketData.queueString}</div>
+                  <div className="text-6xl sm:text-7xl font-bold text-indigo-600 my-3 tracking-tighter">{myTicketData && myTicketData.queueString}</div>
                   <p className="text-sm font-semibold text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full shadow-sm mb-3">{myTicketData && myTicketData.categoryName}</p>
                   
-                  <div className="text-xs text-slate-400 flex items-center justify-center gap-1 border-t border-indigo-100 pt-3">
+                  <div className="text-[10px] sm:text-xs text-slate-400 flex flex-wrap items-center justify-center gap-1 border-t border-indigo-100 pt-3">
                     <span className="material-icons-round text-sm">schedule</span>
                     <span>กดรับคิวเมื่อ: {formatDate(myTicketData.createdAt)} เวลา {formatTime(myTicketData.createdAt)}</span>
                   </div>
                 </div>
                 
-                <div className="border border-slate-100 rounded-2xl p-5 text-left space-y-4 bg-white">
+                <div className="border border-slate-100 rounded-2xl p-4 sm:p-5 text-left space-y-4 bg-white">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-slate-500 font-medium flex items-center gap-2">
+                    <span className="text-slate-500 font-medium flex items-center gap-2 text-sm sm:text-base">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-fast"></div>กำลังเรียก (รวม)
                     </span>
-                    <span className="text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</span>
+                    <span className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-medium">คิวของคุณรออีก</span>
-                    <span className="text-2xl font-bold text-rose-500 bg-rose-50 px-3 py-1 rounded-lg">{queuesAhead} คิว</span>
+                    <span className="text-slate-500 font-medium text-sm sm:text-base">คิวของคุณรออีก</span>
+                    <span className="text-lg sm:text-2xl font-bold text-rose-500 bg-rose-50 px-3 py-1 rounded-lg">{queuesAhead} คิว</span>
                   </div>
                 </div>
                 
-                <p className="text-xs text-slate-400 mt-6">* คุณสามารถเปิดหน้านี้ทิ้งไว้เพื่อดูคิวแบบเรียลไทม์</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 mt-6">* คุณสามารถเปิดหน้านี้ทิ้งไว้เพื่อดูคิวแบบเรียลไทม์</p>
                 <button onClick={() => { setMyTicketId(null); setMyTicketData(null); setShowAlert(false); setStep(1); }} className="mt-4 text-sm text-indigo-500 font-medium hover:underline">← กลับหน้าแรกเพื่อรับคิวใหม่</button>
               </div>
             )}
 
             {showAlert && (
               <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
-                  <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                    <span className="material-icons-round text-4xl">campaign</span>
+                <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+                  <div className="w-16 sm:w-20 h-16 sm:h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                    <span className="material-icons-round text-3xl sm:text-4xl">campaign</span>
                   </div>
-                  <h2 className="text-3xl font-bold text-slate-800 mb-2">ถึงคิวของคุณแล้ว!</h2>
-                  <div className="text-6xl font-extrabold text-indigo-600 my-3">{myTicketData && myTicketData.queueString}</div>
-                  <p className="text-lg font-semibold text-slate-700 bg-emerald-50 py-3 rounded-xl mb-6 text-emerald-700">
-                    เชิญที่ช่องบริการที่ <span className="text-2xl font-black">{displayStatus.counter || 1}</span>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">ถึงคิวของคุณแล้ว!</h2>
+                  <div className="text-5xl sm:text-6xl font-extrabold text-indigo-600 my-3">{myTicketData && myTicketData.queueString}</div>
+                  <p className="text-base sm:text-lg font-semibold text-slate-700 bg-emerald-50 py-3 rounded-xl mb-6 text-emerald-700">
+                    เชิญที่ช่องบริการที่ <span className="text-xl sm:text-2xl font-black">{displayStatus.counter || 1}</span>
                   </p>
                   <button onClick={() => setShowAlert(false)} className="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition shadow-lg">
                     รับทราบ
@@ -309,14 +309,11 @@
             if (action === 'CALL') {
               batch.update(db.collection('tickets').doc(ticket.id), { status: "called", calledAt: Date.now() });
             }
-            
-            // 📌 ตรงนี้ไม่ว่าจะกด CALL หรือ RECALL จะทำการอัปเดตสถานะล่าสุดให้จอทีวีเล่นเสียงเหมือนกันแล้วครับ
             batch.set(db.collection('store_status').doc('display'), {
               currentQueue: ticket.queueString,
               counter: activeCounter,
               lastTrigger: Date.now()
             }, { merge: true });
-
           } else if (action === 'SKIP') {
             batch.update(db.collection('tickets').doc(ticket.id), { status: "skipped" });
           }
@@ -332,15 +329,15 @@
       };
 
       return (
-        <div className="animate-fade-in w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 pt-6 pb-12">
+        <div className="animate-fade-in w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 pt-4 pb-12">
           <div className="flex-1 space-y-6">
-            <div className="glass-card p-6 rounded-[2rem]">
-              <h1 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <div className="glass-card p-4 sm:p-6 rounded-[2rem]">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2 sm:mb-4 flex items-center gap-2">
                 <span className="material-icons-round text-indigo-500">meeting_room</span> เลือกโต๊ะปฏิบัติงานของคุณ
               </h1>
-              <p className="text-sm text-slate-500 mb-4">คลิกเลือกโต๊ะที่ท่านประจำการเพื่อเริ่มเรียกคิว</p>
+              <p className="text-xs sm:text-sm text-slate-500 mb-4">คลิกเลือกโต๊ะที่ท่านประจำการเพื่อเริ่มเรียกคิว</p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-3 mb-6">
                 {counters.length === 0 ? (
                   <p className="text-slate-400 col-span-full py-4 text-center">ยังไม่มีโต๊ะในระบบ โปรดไปเพิ่มที่เมนู "จัดการระบบ"</p>
                 ) : (
@@ -351,15 +348,15 @@
                       <button 
                         key={c.id} 
                         onClick={() => setActiveCounter(c.id)}
-                        className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between ${isSelected ? 'border-indigo-600 bg-indigo-50/80 shadow-md ring-2 ring-indigo-400' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                        className={`p-3 sm:p-4 rounded-2xl border text-left transition-all flex flex-col justify-between ${isSelected ? 'border-indigo-600 bg-indigo-50/80 shadow-md ring-2 ring-indigo-400' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
                       >
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-bold text-slate-800 text-lg">โต๊ะ {c.id}</span>
-                          {isSelected && <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full">ของคุณ</span>}
+                          <span className="font-bold text-slate-800 text-base sm:text-lg truncate">โต๊ะ {c.id}</span>
+                          {isSelected && <span className="text-[10px] sm:text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full ml-1">ของคุณ</span>}
                         </div>
-                        <p className="text-xs text-slate-500 mb-2 truncate">{c.name}</p>
-                        <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                        <p className="text-[10px] sm:text-xs text-slate-500 mb-2 truncate">{c.name}</p>
+                        <div className="pt-2 border-t border-slate-100 flex justify-between items-center mt-auto">
+                          <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-lg ${isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                             {isOpen ? '🟢 เปิด' : '🔴 ปิด'}
                           </span>
                         </div>
@@ -369,73 +366,73 @@
                 )}
               </div>
 
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="font-bold text-slate-700">กำลังปฏิบัติงานที่: <span className="text-indigo-600 text-lg font-black">โต๊ะ {activeCounter}</span></span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${isCurrentOpen ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
+                  <span className="font-bold text-slate-700 text-sm sm:text-base">กำลังปฏิบัติงานที่: <span className="text-indigo-600 text-lg font-black">โต๊ะ {activeCounter}</span></span>
+                  <span className={`inline-block text-center px-3 py-1 rounded-full text-xs font-bold w-fit ${isCurrentOpen ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
                     {isCurrentOpen ? 'พร้อมรับคิว' : 'โต๊ะนี้ปิดบริการอยู่'}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-center mb-4">
                   <div className="bg-white p-3 rounded-xl border">
-                    <p className="text-xs text-slate-400">เรียกล่าสุด</p>
-                    <p className="text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</p>
+                    <p className="text-[10px] sm:text-xs text-slate-400">เรียกล่าสุด</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</p>
                   </div>
                   <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
-                    <p className="text-xs text-indigo-500 font-medium">คิวรอภาพรวม</p>
-                    <p className="text-2xl font-bold text-indigo-600">{waitingTickets.length}</p>
+                    <p className="text-[10px] sm:text-xs text-indigo-500 font-medium">คิวรอภาพรวม</p>
+                    <p className="text-xl sm:text-2xl font-bold text-indigo-600">{waitingTickets.length}</p>
                   </div>
                 </div>
 
                 <button 
                   onClick={handleCallNext} 
                   disabled={!isCurrentOpen}
-                  className={`btn-scale w-full font-bold text-lg py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 ${isCurrentOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
+                  className={`btn-scale w-full font-bold text-base sm:text-lg py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 ${isCurrentOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
                 >
-                  <span className="material-icons-round">campaign</span> เรียกคิวถัดไป (สำหรับโต๊ะ {activeCounter})
+                  <span className="material-icons-round">campaign</span> เรียกคิวถัดไป <span className="hidden sm:inline">(สำหรับโต๊ะ {activeCounter})</span>
                 </button>
               </div>
 
-              <button onClick={() => setShowQRModal(true)} className="w-full bg-slate-50 text-slate-600 font-medium py-3 rounded-xl border border-slate-200 hover:bg-slate-100 transition flex items-center justify-center gap-2">
+              <button onClick={() => setShowQRModal(true)} className="w-full bg-slate-50 text-slate-600 font-medium py-3 rounded-xl border border-slate-200 hover:bg-slate-100 transition flex items-center justify-center gap-2 text-sm sm:text-base">
                 <span className="material-icons-round">qr_code</span> สร้าง QR Code ให้ลูกค้า
               </button>
             </div>
 
-            <div className="glass-card p-6 rounded-[2rem]">
-              <h2 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2"><span className="material-icons-round text-orange-400">history</span> ประวัติการเรียก (10 คิวล่าสุด)</h2>
-              <div className="space-y-3 max-h-60 overflow-y-auto no-scrollbar">
+            <div className="glass-card p-4 sm:p-6 rounded-[2rem]">
+              <h2 className="text-base sm:text-lg font-bold text-slate-700 mb-4 flex items-center gap-2"><span className="material-icons-round text-orange-400">history</span> ประวัติการเรียก (10 คิวล่าสุด)</h2>
+              <div className="space-y-3 max-h-48 sm:max-h-60 overflow-y-auto no-scrollbar">
                 {calledTickets.length === 0 && <p className="text-slate-400 text-sm text-center">ยังไม่มีประวัติ</p>}
                 {calledTickets.map(t => (
                   <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <span className="font-bold text-slate-700">{t.queueString} <span className="text-sm font-normal text-slate-400 ml-2">({t.name})</span></span>
-                    <button onClick={() => manageQueue('RECALL', t)} className="btn-scale bg-orange-100 text-orange-600 px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-orange-200">เรียกซ้ำ</button>
+                    <span className="font-bold text-slate-700 text-sm sm:text-base">{t.queueString} <span className="text-xs sm:text-sm font-normal text-slate-400 ml-1 sm:ml-2 truncate max-w-[100px] sm:max-w-[150px] inline-block align-bottom">({t.name})</span></span>
+                    <button onClick={() => manageQueue('RECALL', t)} className="btn-scale bg-orange-100 text-orange-600 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold hover:bg-orange-200 whitespace-nowrap">เรียกซ้ำ</button>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="w-full lg:w-96 glass-card p-6 rounded-[2rem] flex flex-col h-[700px]">
-            <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><span className="material-icons-round text-emerald-500">list_alt</span> โซนคิวรอทั้งหมด</h2>
+          <div className="w-full lg:w-96 glass-card p-4 sm:p-6 rounded-[2rem] flex flex-col h-[400px] sm:h-[500px] lg:h-[700px]">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><span className="material-icons-round text-emerald-500">list_alt</span> โซนคิวรอทั้งหมด</h2>
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
               {waitingTickets.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-slate-300">
-                  <span className="material-icons-round text-6xl mb-2">check_circle</span>
-                  <p>เคลียร์คิวหมดแล้ว</p>
+                  <span className="material-icons-round text-5xl sm:text-6xl mb-2">check_circle</span>
+                  <p className="text-sm sm:text-base">เคลียร์คิวหมดแล้ว</p>
                 </div>
               ) : (
                 waitingTickets.map(t => (
-                  <div key={t.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-2xl font-bold">{t.queueString}</div>
-                      <div>
-                        <div className="text-sm text-slate-500 font-medium">หมวด: {t.categoryName}</div>
-                        <div className="text-lg font-bold text-slate-800">{t.name}</div>
+                  <div key={t.id} className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold flex-none">{t.queueString}</div>
+                      <div className="overflow-hidden">
+                        <div className="text-xs sm:text-sm text-slate-500 font-medium truncate">หมวด: {t.categoryName}</div>
+                        <div className="text-base sm:text-lg font-bold text-slate-800 truncate">{t.name}</div>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => manageQueue('CALL', t)} className="btn-scale flex-1 bg-emerald-500 text-white py-2 rounded-xl font-semibold hover:bg-emerald-600 shadow-md text-sm">เรียกโต๊ะ {activeCounter}</button>
-                      <button onClick={() => manageQueue('SKIP', t)} className="btn-scale flex-none bg-rose-50 text-rose-600 px-3 py-2 rounded-xl font-semibold hover:bg-rose-100 border border-rose-100 text-sm">ข้าม</button>
+                      <button onClick={() => manageQueue('CALL', t)} className="btn-scale flex-1 bg-emerald-500 text-white py-2 rounded-xl font-semibold hover:bg-emerald-600 shadow-md text-xs sm:text-sm">เรียกโต๊ะ {activeCounter}</button>
+                      <button onClick={() => manageQueue('SKIP', t)} className="btn-scale flex-none bg-rose-50 text-rose-600 px-3 py-2 rounded-xl font-semibold hover:bg-rose-100 border border-rose-100 text-xs sm:text-sm">ข้าม</button>
                     </div>
                   </div>
                 ))
@@ -445,13 +442,13 @@
 
           {showQRModal && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
-              <div className="bg-white p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in border border-slate-100">
-                <h2 className="text-2xl font-bold text-slate-800 mb-1">สแกนรับคิวออนไลน์</h2>
-                <p className="text-sm text-slate-500 mb-6">ลูกค้าสามารถติดตามคิวผ่านมือถือได้ทันที</p>
+              <div className="bg-white p-6 sm:p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in border border-slate-100">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">สแกนรับคิวออนไลน์</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mb-6">ลูกค้าสามารถติดตามคิวผ่านมือถือได้ทันที</p>
                 <div className="bg-slate-50 p-4 rounded-2xl inline-block mb-6 border border-slate-100">
-                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`} alt="QR Code" className="w-48 h-48 mx-auto mix-blend-multiply" />
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`} alt="QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mx-auto mix-blend-multiply" />
                 </div>
-                <button onClick={() => setShowQRModal(false)} className="btn-scale bg-slate-100 text-slate-700 font-bold px-8 py-4 rounded-xl w-full hover:bg-slate-200">ปิดหน้าต่าง</button>
+                <button onClick={() => setShowQRModal(false)} className="btn-scale bg-slate-100 text-slate-700 font-bold px-8 py-3.5 sm:py-4 rounded-xl w-full hover:bg-slate-200 text-sm sm:text-base">ปิดหน้าต่าง</button>
               </div>
             </div>
           )}
@@ -471,12 +468,11 @@
       const [newCounterName, setNewCounterName] = useState("");
       const [tvHeader, setTvHeader] = useState("");
 
-      // 📌 State สำหรับตำแหน่งพิกัดทั้งหมด (รวมพื้นที่ว่าง blank1)
       const [floorConfig, setFloorConfig] = useState({
         nurse: { x: 20, y: 20 },
         waiting: { x: 180, y: 20 },  
         door: { x: 900, y: 50 },      
-        blank1: { x: 180, y: 150 } // 👈 พื้นที่ว่าง (ช่องเปล่า)
+        blank1: { x: 180, y: 150 } 
       });
 
       const [draggingId, setDraggingId] = useState(null);
@@ -495,7 +491,6 @@
           setCounters(list);
         });
 
-        // โหลดตำแหน่งผังห้องจาก Firebase
         db.collection('store_status').doc('floor_config').get().then(doc => {
           if (doc.exists) setFloorConfig(doc.data());
           else db.collection('store_status').doc('floor_config').set(floorConfig);
@@ -526,7 +521,6 @@
         if (x < 10) x = 10;
         if (y < 10) y = 10;
 
-        // 📌 อนุญาตให้ลากพื้นที่ว่าง (blank1) ได้
         if (draggingId === 'nurse' || draggingId === 'waiting' || draggingId === 'door' || draggingId === 'blank1') {
           const updated = { ...floorConfig, [draggingId]: { x, y } };
           setFloorConfig(updated);
@@ -538,7 +532,7 @@
 
       const handleMouseUp = () => setDraggingId(null);
 
-      // --- ฟังก์ชันจัดการข้อมูล (Popup ใหม่) ---
+      // --- ฟังก์ชันจัดการข้อมูล ---
       const handleEditName = (ticketId, currentName) => {
         setPromptValue(currentName);
         setPromptDialog({
@@ -656,141 +650,150 @@
       };
 
       return (
-        <div className="animate-fade-in w-full max-w-6xl mx-auto py-10 space-y-8">
-          <div className="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
-            <h1 className="text-3xl font-bold text-slate-800 mb-2 flex items-center gap-3">
-              <span className="material-icons-round text-indigo-600">settings</span> ระบบจัดการหลังบ้าน (Manager Panel)
+        <div className="animate-fade-in w-full max-w-6xl mx-auto py-6 md:py-10 space-y-6 md:space-y-8">
+          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2 flex items-center gap-3">
+              <span className="material-icons-round text-indigo-600">settings</span> ระบบจัดการหลังบ้าน <span className="hidden sm:inline">(Manager Panel)</span>
             </h1>
-            <p className="text-slate-500">จัดการผังโต๊ะเจ้าหน้าที่แบบจำลองห้อง, หมวดหมู่บริการ Kiosk, หัวข้อจอทีวี และจัดการข้อมูลคิว</p>
+            <p className="text-sm md:text-base text-slate-500">จัดการผังโต๊ะเจ้าหน้าที่แบบจำลองห้อง, หมวดหมู่บริการ Kiosk, หัวข้อจอทีวี และจัดการข้อมูลคิว</p>
           </div>
 
-          <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-slate-100">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <span className="material-icons-round text-indigo-500">room_preferences</span> จำลองผังห้องปฏิบัติงาน (ลากวางโต๊ะได้)
+          <div className="bg-white p-4 md:p-6 rounded-[2rem] shadow-lg border border-slate-100">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
+              <h3 className="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <span className="material-icons-round text-indigo-500">room_preferences</span> จำลองผังห้องปฏิบัติงาน <span className="hidden sm:inline">(ลากวางโต๊ะได้)</span>
               </h3>
-              <p className="text-xs text-slate-400">💡 คลิกเมาส์ค้างที่กล่องโต๊ะแล้วลากเพื่อจัดตำแหน่งในห้อง</p>
+              <p className="text-[10px] md:text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-md w-fit">💡 เลื่อนซ้ายขวาเพื่อดูผังห้องได้</p>
             </div>
 
-            <div 
-              id="floor-plan-area" 
-              onMouseMove={handleMouseMove} 
-              onMouseUp={handleMouseUp}
-              className="w-full h-[450px] bg-slate-900 rounded-3xl relative overflow-hidden border-2 border-dashed border-slate-700 shadow-inner p-4"
-            >
-              {/* โซนที่นั่งรอคิว */}
+            {/* 📌 ทำให้กรอบจำลองผังห้องเลื่อนซ้ายขวาได้เมื่อหน้าจอแคบเกินไป */}
+            <div className="w-full overflow-x-auto pb-4 no-scrollbar">
               <div 
-                onMouseDown={(e) => { setDraggingId('waiting'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
-                style={{ left: `${floorConfig.waiting ? floorConfig.waiting.x : 180}px`, top: `${floorConfig.waiting ? floorConfig.waiting.y : 20}px` }}
-                className="absolute cursor-grab active:cursor-grabbing bg-slate-800/90 border-2 border-slate-600 rounded-2xl w-[650px] h-[100px] text-slate-300 text-sm font-semibold flex flex-row items-center justify-center gap-4 shadow-xl select-none"
+                id="floor-plan-area" 
+                onMouseMove={handleMouseMove} 
+                onMouseUp={handleMouseUp}
+                className="min-w-[1000px] h-[450px] bg-slate-900 rounded-3xl relative overflow-hidden border-2 border-dashed border-slate-700 shadow-inner p-4"
               >
-                <span className="material-icons-round text-emerald-400 text-4xl">event_seat</span> 
-                <span className="text-xl tracking-wider">โซนที่นั่งรอคิว</span>
-              </div>
+                {/* โซนที่นั่งรอคิว */}
+                <div 
+                  onMouseDown={(e) => handleMouseDown(e, 'waiting')}
+                  style={{ left: `${floorConfig.waiting ? floorConfig.waiting.x : 180}px`, top: `${floorConfig.waiting ? floorConfig.waiting.y : 20}px` }}
+                  className="absolute cursor-grab active:cursor-grabbing bg-slate-800/90 border-2 border-slate-600 rounded-2xl w-[650px] h-[100px] text-slate-300 text-sm font-semibold flex flex-row items-center justify-center gap-4 shadow-xl select-none"
+                >
+                  <span className="material-icons-round text-emerald-400 text-4xl">event_seat</span> 
+                  <span className="text-xl tracking-wider">โซนที่นั่งรอคิว</span>
+                </div>
 
-              {/* 🔵 สีฟ้า: ประตูทางเข้า (ปรับให้สั้นลง) */}
-              <div 
-                onMouseDown={(e) => { setDraggingId('door'); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
-                style={{ left: `${floorConfig.door ? floorConfig.door.x : 900}px`, top: `${floorConfig.door ? floorConfig.door.y : 50}px` }}
-                className="absolute cursor-grab active:cursor-grabbing w-10 h-[160px] bg-amber-500/90 border-2 border-amber-400 rounded-xl flex items-center justify-center text-slate-950 font-bold shadow-xl select-none"
-              >
-                <span className="-rotate-90 whitespace-nowrap text-sm flex items-center gap-1 tracking-widest">
-                   ประตู
-                </span>
-              </div>
+                {/* ประตูทางเข้า */}
+                <div 
+                  onMouseDown={(e) => handleMouseDown(e, 'door')}
+                  style={{ left: `${floorConfig.door ? floorConfig.door.x : 900}px`, top: `${floorConfig.door ? floorConfig.door.y : 50}px` }}
+                  className="absolute cursor-grab active:cursor-grabbing w-10 h-[160px] bg-amber-500/90 border-2 border-amber-400 rounded-xl flex items-center justify-center text-slate-950 font-bold shadow-xl select-none"
+                >
+                  <span className="-rotate-90 whitespace-nowrap text-sm flex items-center gap-1 tracking-widest">
+                     ประตู
+                  </span>
+                </div>
 
-              {/* โต๊ะเจ้าหน้าที่ทั้งหมด */}
-              {counters.map(c => {
-                const posX = c.posX || 200;
-                const posY = c.posY || 280;
-                const isOpen = c.isOpen !== false;
-                
-                // 🔴 สีแดง: เช็คว่าเป็นโต๊ะพยาบาลหรือไม่ (ดูจากรหัส 'งานพยาบาล' หรือชื่อมีคำว่า 'พยาบาล')
-                const isNurse = c.id === 'งานพยาบาล' || (c.name && c.name.includes('พยาบาล'));
+                {/* พื้นที่ว่าง (ลากได้) */}
+                <div 
+                  onMouseDown={(e) => handleMouseDown(e, 'blank1')}
+                  style={{ left: `${floorConfig.blank1 ? floorConfig.blank1.x : 180}px`, top: `${floorConfig.blank1 ? floorConfig.blank1.y : 150}px` }}
+                  className="absolute cursor-grab active:cursor-grabbing w-32 h-24 bg-slate-200/20 border-2 border-slate-400 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400 shadow-sm select-none hover:bg-slate-200/40 transition"
+                >
+                  <span className="material-icons-round text-2xl mb-1 opacity-50">crop_free</span>
+                  <span className="font-semibold text-xs">พื้นที่ว่าง</span>
+                </div>
 
-                if (isNurse) {
-                  // รูปแบบโต๊ะพยาบาล (รวมกล่องเขียวสูงๆ และปุ่มกดไว้ด้วยกัน)
+                {/* โต๊ะเจ้าหน้าที่ทั้งหมด */}
+                {counters.map(c => {
+                  const posX = c.posX || 200;
+                  const posY = c.posY || 280;
+                  const isOpen = c.isOpen !== false;
+                  const isNurse = c.id === 'พยบ' || (c.name && c.name.includes('พยาบาล'));
+
+                  if (isNurse) {
+                    return (
+                      <div
+                        key={c.id}
+                        onMouseDown={(e) => handleMouseDown(e, c.id)}
+                        style={{ left: `${posX}px`, top: `${posY}px` }}
+                        className={`absolute cursor-grab active:cursor-grabbing w-32 h-[320px] bg-teal-950/90 border-2 rounded-2xl flex flex-col items-center justify-between text-teal-200 p-3 shadow-xl select-none ${isOpen ? 'border-emerald-500' : 'border-rose-400 opacity-90'}`}
+                      >
+                        <div className="w-full bg-white/95 rounded-xl p-2 flex flex-col items-center gap-2 shadow-sm">
+                          <span className="font-bold text-slate-800 text-sm text-center">โต๊ะ {c.id}</span>
+                          <button 
+                            onMouseDown={(e) => e.stopPropagation()} 
+                            onClick={() => handleToggleCounterOpen(c.id, isOpen)}
+                            className={`flex flex-col items-center justify-center w-full py-2 rounded-lg border shadow-sm transition-transform hover:scale-105 ${isOpen ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}
+                          >
+                             <span className={`w-3 h-3 rounded-full mb-1 ${isOpen ? 'bg-emerald-500 animate-pulse-fast' : 'bg-rose-500'}`}></span>
+                             <span className="text-[10px] font-extrabold leading-none">{isOpen ? 'เปิดรับ' : 'ปิดคิว'}</span>
+                          </button>
+                        </div>
+                        <span className="material-icons-round text-4xl text-teal-400 mt-2">local_hospital</span>
+                        <span className="font-bold text-sm -rotate-90 whitespace-nowrap tracking-widest mb-10 text-teal-300">{c.name}</span>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div
                       key={c.id}
-                      onMouseDown={(e) => { setDraggingId(c.id); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
+                      onMouseDown={(e) => handleMouseDown(e, c.id)}
                       style={{ left: `${posX}px`, top: `${posY}px` }}
-                      className={`absolute cursor-grab active:cursor-grabbing w-32 h-[320px] bg-teal-950/90 border-2 rounded-2xl flex flex-col items-center justify-between text-teal-200 p-3 shadow-xl select-none ${isOpen ? 'border-emerald-500' : 'border-rose-400 opacity-90'}`}
+                      className={`absolute cursor-grab active:cursor-grabbing w-56 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border-2 transition-shadow select-none ${isOpen ? 'border-emerald-500' : 'border-rose-400 opacity-80'}`}
                     >
-                      <div className="w-full bg-white/95 rounded-xl p-2 flex flex-col items-center gap-2 shadow-sm">
-                        <span className="font-bold text-slate-800 text-sm text-center">โต๊ะ {c.id}</span>
+                      <div className="flex justify-between items-start mb-1">
+                        <div>
+                          <span className="font-bold text-slate-800 text-base block">โต๊ะ {c.id}</span>
+                          <span className="text-xs text-slate-500 truncate block w-28">{c.name}</span>
+                        </div>
                         <button 
                           onMouseDown={(e) => e.stopPropagation()} 
                           onClick={() => handleToggleCounterOpen(c.id, isOpen)}
-                          className={`flex flex-col items-center justify-center w-full py-2 rounded-lg border shadow-sm transition-transform hover:scale-105 ${isOpen ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}
+                          className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg border shadow-sm transition-transform hover:scale-105 ${isOpen ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}
+                          title="กดเพื่อเปิด/ปิดรับคิว"
                         >
-                           <span className={`w-3 h-3 rounded-full mb-1 ${isOpen ? 'bg-emerald-500 animate-pulse-fast' : 'bg-rose-500'}`}></span>
+                           <span className={`w-3.5 h-3.5 rounded-full mb-1.5 ${isOpen ? 'bg-emerald-500 animate-pulse-fast' : 'bg-rose-500'}`}></span>
                            <span className="text-[10px] font-extrabold leading-none">{isOpen ? 'เปิดรับ' : 'ปิดคิว'}</span>
                         </button>
                       </div>
-                      <span className="material-icons-round text-4xl text-teal-400 mt-2">local_hospital</span>
-                      <span className="font-bold text-sm -rotate-90 whitespace-nowrap tracking-widest mb-10 text-teal-300">{c.name}</span>
                     </div>
                   );
-                }
-
-                // 🟣 สีม่วง: รูปแบบโต๊ะปกติ (ปรับขยายขนาดให้ใหญ่ขึ้น)
-                return (
-                  <div
-                    key={c.id}
-                    onMouseDown={(e) => { setDraggingId(c.id); const rect = e.currentTarget.getBoundingClientRect(); setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
-                    style={{ left: `${posX}px`, top: `${posY}px` }}
-                    className={`absolute cursor-grab active:cursor-grabbing w-56 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border-2 transition-shadow select-none ${isOpen ? 'border-emerald-500' : 'border-rose-400 opacity-80'}`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <div>
-                        <span className="font-bold text-slate-800 text-base block">โต๊ะ {c.id}</span>
-                        <span className="text-xs text-slate-500 truncate block w-28">{c.name}</span>
-                      </div>
-                      <button 
-                        onMouseDown={(e) => e.stopPropagation()} 
-                        onClick={() => handleToggleCounterOpen(c.id, isOpen)}
-                        className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg border shadow-sm transition-transform hover:scale-105 ${isOpen ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}
-                        title="กดเพื่อเปิด/ปิดรับคิว"
-                      >
-                         <span className={`w-3.5 h-3.5 rounded-full mb-1.5 ${isOpen ? 'bg-emerald-500 animate-pulse-fast' : 'bg-rose-500'}`}></span>
-                         <span className="text-[10px] font-extrabold leading-none">{isOpen ? 'เปิดรับ' : 'ปิดคิว'}</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col">
-              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <div className="bg-white p-5 md:p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col">
+              <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="material-icons-round text-indigo-500">meeting_room</span> ตั้งค่าโต๊ะเจ้าหน้าที่ (Counters)
               </h3>
-              <form onSubmit={handleAddCounter} className="flex gap-2 mb-4">
-                <input type="text" placeholder="เลขโต๊ะ (เช่น 1)" className="w-24 p-3 border border-slate-200 rounded-xl font-bold outline-none" value={newCounterId} onChange={e => setNewCounterId(e.target.value)} maxLength={15} />
-                <input type="text" placeholder="ชื่อโต๊ะ (เช่น ช่องบริการ 1)" className="flex-1 p-3 border border-slate-200 rounded-xl outline-none" value={newCounterName} onChange={e => setNewCounterName(e.target.value)} />
-                <button type="submit" className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700">เพิ่มโต๊ะ</button>
+              <form onSubmit={handleAddCounter} className="flex flex-col sm:flex-row gap-2 mb-4">
+                <input type="text" placeholder="เลขโต๊ะ (เช่น 1)" className="w-full sm:w-24 p-3 border border-slate-200 rounded-xl font-bold outline-none text-sm md:text-base" value={newCounterId} onChange={e => setNewCounterId(e.target.value)} maxLength={3} />
+                <input type="text" placeholder="ชื่อโต๊ะ (เช่น ช่องบริการ 1)" className="flex-1 p-3 border border-slate-200 rounded-xl outline-none text-sm md:text-base" value={newCounterName} onChange={e => setNewCounterName(e.target.value)} />
+                <button type="submit" className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 text-sm md:text-base whitespace-nowrap">เพิ่มโต๊ะ</button>
               </form>
-              <div className="flex-1 overflow-y-auto max-h-60 space-y-2">
+              <div className="flex-1 overflow-y-auto max-h-48 md:max-h-60 space-y-2">
                 {counters.length === 0 ? (
-                  <p className="text-slate-400 text-center py-4">ยังไม่มีโต๊ะเจ้าหน้าที่ในระบบ</p>
+                  <p className="text-slate-400 text-center py-4 text-sm">ยังไม่มีโต๊ะเจ้าหน้าที่ในระบบ</p>
                 ) : (
                   counters.map(c => {
                     const isOpen = c.isOpen !== false;
                     return (
-                      <div key={c.id} className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-700 bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg">โต๊ะ {c.id}</span>
-                          <span className="font-medium text-slate-600">{c.name}</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                      <div key={c.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <span className="font-bold text-slate-700 bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg text-sm flex-none">โต๊ะ {c.id}</span>
+                          <span className="font-medium text-slate-600 text-sm truncate">{c.name}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-none ${isOpen ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                              {isOpen ? 'เปิด' : 'ปิด'}
                           </span>
                         </div>
-                        <div className="flex gap-3 items-center">
-                          <button onClick={() => handleEditCounter(c.id, c.name)} className="text-amber-600 font-bold text-sm hover:underline">แก้ไข</button>
-                          <button onClick={() => handleDeleteCounter(c.id)} className="text-rose-500 font-bold text-sm hover:underline">ลบ</button>
+                        <div className="flex gap-3 items-center self-end sm:self-auto">
+                          <button onClick={() => handleEditCounter(c.id, c.name)} className="text-amber-600 font-bold text-xs sm:text-sm hover:underline">แก้ไข</button>
+                          <button onClick={() => handleDeleteCounter(c.id)} className="text-rose-500 font-bold text-xs sm:text-sm hover:underline">ลบ</button>
                         </div>
                       </div>
                     );
@@ -799,35 +802,35 @@
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col">
-              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <div className="bg-white p-5 md:p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col">
+              <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="material-icons-round text-indigo-500">category</span> จัดการหมวดหมู่บริการ Kiosk
               </h3>
-              <form onSubmit={handleAddCategory} className="flex gap-2 mb-4">
-                <input type="text" placeholder="รหัส (เช่น A)" className="w-20 p-3 border border-slate-200 rounded-xl uppercase font-bold outline-none" value={newCatId} onChange={e => setNewCatId(e.target.value)} maxLength={2} />
-                <input type="text" placeholder="ชื่อบริการ (เช่น ชำระเงิน)" className="flex-1 p-3 border border-slate-200 rounded-xl outline-none" value={newCatName} onChange={e => setNewCatName(e.target.value)} />
-                <button type="submit" className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700">เพิ่ม</button>
+              <form onSubmit={handleAddCategory} className="flex flex-col sm:flex-row gap-2 mb-4">
+                <input type="text" placeholder="รหัส (เช่น A)" className="w-full sm:w-20 p-3 border border-slate-200 rounded-xl uppercase font-bold outline-none text-sm md:text-base" value={newCatId} onChange={e => setNewCatId(e.target.value)} maxLength={2} />
+                <input type="text" placeholder="ชื่อบริการ (เช่น ชำระเงิน)" className="flex-1 p-3 border border-slate-200 rounded-xl outline-none text-sm md:text-base" value={newCatName} onChange={e => setNewCatName(e.target.value)} />
+                <button type="submit" className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 text-sm md:text-base whitespace-nowrap">เพิ่ม</button>
               </form>
-              <div className="flex-1 overflow-y-auto max-h-60 space-y-2">
+              <div className="flex-1 overflow-y-auto max-h-48 md:max-h-60 space-y-2">
                 {categories.length === 0 ? (
-                  <p className="text-slate-400 text-center py-4">ยังไม่มีหมวดหมู่บริการ</p>
+                  <p className="text-slate-400 text-center py-4 text-sm">ยังไม่มีหมวดหมู่บริการ</p>
                 ) : (
                   categories.map(cat => {
                     const isOpen = cat.isOpen !== false;
                     return (
-                      <div key={cat.id} className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-700"><span className="bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg">[{cat.id}]</span> {cat.name}</span>
+                      <div key={cat.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <span className="font-bold text-slate-700 text-sm truncate"><span className="bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg mr-1">[{cat.id}]</span> {cat.name}</span>
                         </div>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex gap-2 items-center self-end sm:self-auto">
                           <button 
                             onClick={() => handleToggleCategoryOpen(cat.id, isOpen)} 
-                            className={`px-3 py-1 rounded-lg text-xs font-bold ${isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold ${isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}
                           >
                             {isOpen ? '🟢 เปิด' : '🔴 ปิด'}
                           </button>
-                          <button onClick={() => handleEditCategory(cat.id, cat.name)} className="text-amber-600 font-bold text-sm hover:underline">แก้ไข</button>
-                          <button onClick={() => handleDeleteCategory(cat.id)} className="text-rose-500 font-bold text-sm hover:underline">ลบ</button>
+                          <button onClick={() => handleEditCategory(cat.id, cat.name)} className="text-amber-600 font-bold text-xs sm:text-sm hover:underline ml-1">แก้ไข</button>
+                          <button onClick={() => handleDeleteCategory(cat.id)} className="text-rose-500 font-bold text-xs sm:text-sm hover:underline">ลบ</button>
                         </div>
                       </div>
                     );
@@ -837,37 +840,37 @@
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col md:flex-row items-center gap-4">
+          <div className="bg-white p-5 md:p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col md:flex-row items-center gap-4">
             <div className="flex-1 w-full">
-              <h3 className="text-xl font-bold text-slate-800 mb-1 flex items-center gap-2"><span className="material-icons-round text-indigo-500">tv</span> แก้ไขแถบหัวข้อจอทีวี</h3>
-              <p className="text-slate-500 text-sm mb-3">ข้อความนี้จะแสดงพาดหัวอยู่ด้านบนสุดของหน้าจอแสดงผลทีวี</p>
-              <input type="text" placeholder="เช่น คลินิกสุขภาพชุมชน - ยินดีต้อนรับ" className="w-full p-3.5 border border-slate-200 rounded-xl outline-none text-lg" value={tvHeader} onChange={e => setTvHeader(e.target.value)} />
+              <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-1 flex items-center gap-2"><span className="material-icons-round text-indigo-500">tv</span> แก้ไขแถบหัวข้อจอทีวี</h3>
+              <p className="text-xs md:text-sm text-slate-500 mb-3">ข้อความนี้จะแสดงพาดหัวอยู่ด้านบนสุดของหน้าจอแสดงผลทีวี</p>
+              <input type="text" placeholder="เช่น คลินิกสุขภาพชุมชน - ยินดีต้อนรับ" className="w-full p-3.5 border border-slate-200 rounded-xl outline-none text-base md:text-lg" value={tvHeader} onChange={e => setTvHeader(e.target.value)} />
             </div>
-            <button onClick={handleSaveTvHeader} className="w-full md:w-auto bg-emerald-600 text-white font-bold px-8 py-4 rounded-xl shadow-md hover:bg-emerald-700 transition mt-auto">บันทึกหัวข้อทีวี</button>
+            <button onClick={handleSaveTvHeader} className="w-full md:w-auto bg-emerald-600 text-white font-bold px-8 py-3.5 md:py-4 rounded-xl shadow-md hover:bg-emerald-700 transition mt-auto text-sm md:text-base">บันทึกหัวข้อทีวี</button>
           </div>
 
-          <div className="bg-white p-8 rounded-[2rem] shadow-lg border border-slate-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><span className="material-icons-round text-indigo-500">list_alt</span> จัดการข้อมูลคิวทั้งหมดในระบบ (แก้ไขชื่อ / ลบ)</h3>
-              <button onClick={handleResetQueue} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-rose-700 transition flex items-center gap-1">
+          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+              <h3 className="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2"><span className="material-icons-round text-indigo-500">list_alt</span> จัดการข้อมูลคิวทั้งหมดในระบบ</h3>
+              <button onClick={handleResetQueue} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-md hover:bg-rose-700 transition flex items-center justify-center gap-1">
                 <span className="material-icons-round text-sm">delete_sweep</span> รีเซ็ตคิวทั้งหมดวันนี้
               </button>
             </div>
 
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            <div className="space-y-3 max-h-80 md:max-h-96 overflow-y-auto pr-1 md:pr-2">
               {tickets.length === 0 ? (
-                <p className="text-center text-slate-400 py-8">ไม่มีข้อมูลคิวในระบบ</p>
+                <p className="text-center text-slate-400 py-8 text-sm">ไม่มีข้อมูลคิวในระบบ</p>
               ) : (
                 tickets.map(t => (
-                  <div key={t.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <div>
-                      <span className="text-xl font-bold text-indigo-600 mr-3">#{t.queueString}</span>
-                      <span className="font-semibold text-slate-700">{t.name}</span>
-                      <span className="text-xs ml-3 bg-slate-200 px-2.5 py-1 rounded-full font-medium text-slate-600">สถานะ: {t.status}</span>
+                  <div key={t.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <span className="text-lg sm:text-xl font-bold text-indigo-600 mr-1 sm:mr-3">#{t.queueString}</span>
+                      <span className="font-semibold text-slate-700 text-sm sm:text-base truncate max-w-[150px] sm:max-w-[200px]">{t.name}</span>
+                      <span className="text-[10px] sm:text-xs bg-slate-200 px-2 sm:px-2.5 py-1 rounded-full font-medium text-slate-600 whitespace-nowrap">สถานะ: {t.status}</span>
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEditName(t.id, t.name)} className="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-amber-600">แก้ไขชื่อ</button>
-                      <button onClick={() => handleDeleteTicket(t.id)} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-rose-600">ลบทิ้ง</button>
+                    <div className="flex gap-2 self-end sm:self-auto">
+                      <button onClick={() => handleEditName(t.id, t.name)} className="bg-amber-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-600">แก้ไขชื่อ</button>
+                      <button onClick={() => handleDeleteTicket(t.id)} className="bg-rose-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:bg-rose-600">ลบทิ้ง</button>
                     </div>
                   </div>
                 ))
@@ -897,26 +900,23 @@
         if (displayStatus.lastTrigger > lastPlayedRef.current) {
           lastPlayedRef.current = displayStatus.lastTrigger;
           
-          // 1. เอฟเฟกต์ตัวหนังสือคิวเด้ง
           const qElem = document.getElementById('tv-queue');
           if(qElem) { qElem.classList.add('scale-110', 'text-yellow-300'); setTimeout(() => qElem.classList.remove('scale-110', 'text-yellow-300'), 1500); }
 
-          // 2. เล่นเสียงกระดิ่ง (เฉพาะหน้านี้)
           const chime = document.getElementById('chime-sound');
           if (chime) {
             chime.currentTime = 0;
             chime.play().catch(e => console.log(e));
           }
 
-          // 3. ระบบอ่านข้อความเสียง (เฉพาะหน้านี้)
           setTimeout(() => {
             if ('speechSynthesis' in window && displayStatus.currentQueue !== "-") {
               window.speechSynthesis.cancel();
-              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ครับ`;
+              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ค่ะ`;
               
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'th-TH'; 
-              utterance.rate = 0.70; 
+              utterance.rate = 0.85; 
               utterance.pitch = 1.2;
               
               const voices = window.speechSynthesis.getVoices();
@@ -931,8 +931,8 @@
 
       if (!isStarted) {
         return (
-          <div className="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
-            <button onClick={() => setIsStarted(true)} className="btn-scale bg-white text-indigo-900 px-10 py-6 rounded-3xl text-2xl font-bold shadow-2xl flex flex-col items-center gap-4">
+          <div className="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
+            <button onClick={() => setIsStarted(true)} className="btn-scale w-full max-w-sm bg-white text-indigo-900 px-6 sm:px-10 py-8 rounded-3xl text-xl sm:text-2xl font-bold shadow-2xl flex flex-col items-center gap-4 text-center">
               <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-4xl">▶️</div>
               เริ่มหน้าจอทีวี (เปิดระบบเสียง)
             </button>
@@ -941,43 +941,46 @@
       }
 
       return (
-        <div className={`w-full max-w-[1400px] mx-auto bg-slate-900 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-700 animate-fade-in relative transition-all duration-500 ${hideNavbar ? 'h-[95vh] mt-4' : 'h-[85vh] mt-4'}`}>
+        <div className={`w-full max-w-[1400px] mx-auto bg-slate-900 rounded-3xl md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-700 animate-fade-in relative transition-all duration-500 ${hideNavbar ? 'h-[95vh] mt-2 md:mt-4' : 'h-[85vh] mt-2 md:mt-4'}`}>
           
-          <div className="w-full bg-indigo-900/80 border-b border-indigo-700/50 py-4 px-8 text-center backdrop-blur-md flex justify-center items-center relative">
-            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-wide">{headerTitle}</h1>
+          <div className="w-full bg-indigo-900/80 border-b border-indigo-700/50 py-3 md:py-4 px-4 md:px-8 text-center backdrop-blur-md flex justify-center items-center relative">
+            <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-white tracking-wide truncate pr-10">{headerTitle}</h1>
             
             <button 
               onClick={() => setHideNavbar(!hideNavbar)}
-              className="absolute right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-md z-50"
+              className="absolute right-3 md:right-6 p-1.5 md:p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-md z-50"
               title={hideNavbar ? "แสดงเมนูหลัก" : "ซ่อนเมนูให้เต็มจอ"}
             >
-              <span className="material-icons-round text-2xl">
+              <span className="material-icons-round text-xl md:text-2xl">
                 {hideNavbar ? 'fullscreen_exit' : 'fullscreen'}
               </span>
             </button>
           </div>
 
-          <div className="flex-1 flex overflow-hidden">
-            <div className="w-2/3 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-10 flex flex-col justify-center items-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600 rounded-full mix-blend-screen filter blur-[120px] opacity-20"></div>
-              <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500 rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
+          {/* 📌 หน้าจอทีวี ปรับโครงสร้างให้รองรับแนวตั้งบนจอมือถือ/แท็บเล็ต */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            <div className="w-full lg:w-2/3 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-6 sm:p-10 flex flex-col justify-center items-center relative overflow-hidden flex-1 lg:flex-auto min-h-[50%]">
+              <div className="absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-indigo-600 rounded-full mix-blend-screen filter blur-[100px] md:blur-[120px] opacity-20"></div>
+              <div className="absolute bottom-0 left-0 w-[200px] md:w-[400px] h-[200px] md:h-[400px] bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] md:blur-[100px] opacity-20"></div>
               
-              <h2 className="text-4xl font-medium mb-2 text-indigo-200 tracking-wide z-10">หมายเลขคิว</h2>
-              <div id="tv-queue" className="text-[14rem] font-bold leading-none tracking-tighter my-2 z-10 text-white text-glow transition-all duration-300">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium mb-1 md:mb-2 text-indigo-200 tracking-wide z-10">หมายเลขคิว</h2>
+              {/* ย่อขนาดอักษรให้อัตโนมัติเมื่อจอเล็ก */}
+              <div id="tv-queue" className="text-7xl sm:text-[10rem] md:text-[12rem] lg:text-[14rem] font-bold leading-none tracking-tighter my-1 md:my-2 z-10 text-white text-glow transition-all duration-300">
                 {displayStatus.currentQueue}
               </div>
-              <div className="mt-6 bg-white/10 backdrop-blur-md border border-white/20 px-10 py-4 rounded-full text-4xl font-bold flex items-center gap-4 z-10 shadow-xl">
-                ช่องบริการ <span className="text-yellow-400 text-5xl ml-3 font-black">{displayStatus.counter}</span>
+              <div className="mt-4 md:mt-6 bg-white/10 backdrop-blur-md border border-white/20 px-6 sm:px-10 py-3 sm:py-4 rounded-full text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2 sm:gap-4 z-10 shadow-xl whitespace-nowrap">
+                ช่องบริการ <span className="text-yellow-400 text-3xl sm:text-4xl md:text-5xl ml-1 sm:ml-3 font-black">{displayStatus.counter}</span>
               </div>
             </div>
 
-            <div className="w-1/3 bg-slate-50 p-8 flex flex-col border-l border-slate-800">
-              <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3 border-b border-slate-200 pb-4">
-                <span className="w-3.5 h-3.5 rounded-full bg-indigo-500"></span> คิวรอถัดไป
+            <div className="w-full lg:w-1/3 bg-slate-50 p-4 sm:p-6 lg:p-8 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-800">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 mb-4 lg:mb-6 flex items-center gap-2 lg:gap-3 border-b border-slate-200 pb-2 lg:pb-4">
+                <span className="w-2.5 h-2.5 lg:w-3.5 lg:h-3.5 rounded-full bg-indigo-500"></span> คิวรอถัดไป
               </h3>
-              <div className="flex-1 overflow-y-auto no-scrollbar space-y-4">
+              {/* เปลี่ยนรายการคิวรอให้เลื่อนแนวนอนได้เมื่อเป็นหน้าจอเล็กแนวตั้ง */}
+              <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto no-scrollbar gap-3 lg:space-y-4 lg:gap-0 pb-2 lg:pb-0">
                 {waitingTickets.slice(0, 5).map(t => (
-                  <div key={t.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 text-center text-4xl font-bold text-slate-700 tracking-wide">
+                  <div key={t.id} className="bg-white p-3 lg:p-4 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 text-center text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-700 tracking-wide min-w-[120px] lg:min-w-0 flex-none">
                     {t.queueString}
                   </div>
                 ))}
@@ -1002,11 +1005,11 @@
       const [waitingTickets, setWaitingTickets] = useState([]);
       const [calledTickets, setCalledTickets] = useState([]);
       
-      // 📌 State สำหรับควบคุม Popup รูปแบบต่างๆ ทั้งหมด
       const [modalMessage, setModalMessage] = useState(null); 
       const [confirmDialog, setConfirmDialog] = useState(null); 
       const [promptDialog, setPromptDialog] = useState(null);
       const [promptValue, setPromptValue] = useState("");
+      const [hideNavbar, setHideNavbar] = useState(false);
 
       useEffect(() => {
         const unsubStore = db.collection('store_status').doc('display').onSnapshot(doc => {
@@ -1030,30 +1033,27 @@
       }, []);
 
       const isIsolated = urlMode === 'kiosk' || urlMode === 'tv' || urlMode === 'manager';
-      
-      // 📌 State สำหรับซ่อน/แสดง Navbar (ค่าเริ่มต้นคือ false = แสดง)
-      const [hideNavbar, setHideNavbar] = useState(false);
 
       return (
         <div className="flex flex-col min-h-screen">
-          {/* 📌 ใช้ตัวแปร hideNavbar มาช่วยควบคุมการซ่อนเมนู */}
           {!isIsolated && !hideNavbar && (
-            <div className="w-full flex justify-between items-center pt-6 px-6 md:px-10 z-50">
+            <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 pt-4 md:pt-6 px-4 md:px-10 z-50">
               
-              <div className="flex items-center gap-3 bg-white/70 backdrop-blur-md px-5 py-2.5 rounded-full shadow-sm border border-white/40 cursor-default">
+              <div className="flex items-center gap-3 bg-white/70 backdrop-blur-md px-5 py-2.5 rounded-full shadow-sm border border-white/40 cursor-default w-full md:w-auto justify-center">
                 <img 
                   src="https://cdn-icons-png.flaticon.com/512/2913/2913076.png" 
                   alt="Logo" 
-                  className="w-8 h-8 object-contain" 
+                  className="w-6 h-6 md:w-8 md:h-8 object-contain" 
                 />
-                <span className="font-bold text-indigo-700 text-lg tracking-wide">Q-System</span>
+                <span className="font-bold text-indigo-700 text-base md:text-lg tracking-wide">Q-System</span>
               </div>
 
-              <nav className="bg-white/70 backdrop-blur-md shadow-sm border border-white/40 rounded-full p-1.5 flex gap-1 overflow-x-auto no-scrollbar">
-                <button onClick={() => setView('kiosk')} className={`px-5 py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 ${view === 'kiosk' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-base">touch_app</span> รับคิว</button>
-                <button onClick={() => setView('admin')} className={`px-5 py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 ${view === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-base">admin_panel_settings</span> แผงพนักงาน</button>
-                <button onClick={() => setView('manager')} className={`px-5 py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 ${view === 'manager' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-base">settings</span> จัดการระบบ</button>
-                <button onClick={() => setView('tv')} className={`px-5 py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 ${view === 'tv' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-base">tv</span> จอทีวี</button>
+              {/* 📌 แถบเมนู ปรับให้เลื่อนสไลด์ซ้ายขวาได้เมื่อเปิดบนจอมือถือเล็กๆ */}
+              <nav className="bg-white/70 backdrop-blur-md shadow-sm border border-white/40 rounded-full p-1.5 flex gap-1 overflow-x-auto no-scrollbar w-full md:w-auto snap-x snap-mandatory">
+                <button onClick={() => setView('kiosk')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'kiosk' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">touch_app</span> รับคิว</button>
+                <button onClick={() => setView('admin')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">admin_panel_settings</span> แผงพนักงาน</button>
+                <button onClick={() => setView('manager')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'manager' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">settings</span> จัดการระบบ</button>
+                <button onClick={() => setView('tv')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'tv' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">tv</span> จอทีวี</button>
               </nav>
               
             </div>
@@ -1070,40 +1070,38 @@
                 setPromptValue={setPromptValue} 
               />
             )}
-            {/* 📌 ส่ง props ควบคุมเมนูไปให้ DisplayView (หน้าจอทีวี) */}
             {view === 'tv' && <DisplayView displayStatus={displayStatus} waitingTickets={waitingTickets} hideNavbar={hideNavbar} setHideNavbar={setHideNavbar} />}
           </main>
 
-          {/* 📌 1. Popup แจ้งเตือนทั่วไป (แทน alert) */}
+          {/* 📌 Popup Alerts ต่างๆ */}
           {modalMessage && (
             <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+              <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
                 <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="material-icons-round text-3xl">info</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2">แจ้งเตือนจากระบบ</h3>
-                <p className="text-slate-600 mb-6">{modalMessage}</p>
-                <button onClick={() => setModalMessage(null)} className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg">
+                <p className="text-slate-600 mb-6 text-sm sm:text-base">{modalMessage}</p>
+                <button onClick={() => setModalMessage(null)} className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg text-sm sm:text-base">
                   ตกลง
                 </button>
               </div>
             </div>
           )}
 
-          {/* 📌 2. Popup สำหรับการยืนยัน ลบ/รีเซ็ต (แทน confirm) */}
           {confirmDialog && (
             <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+              <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
                 <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="material-icons-round text-3xl">warning</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2">ยืนยันการดำเนินการ</h3>
-                <p className="text-slate-600 mb-6">{confirmDialog.message}</p>
+                <p className="text-slate-600 mb-6 text-sm sm:text-base">{confirmDialog.message}</p>
                 <div className="flex gap-3">
-                  <button onClick={() => setConfirmDialog(null)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition">
+                  <button onClick={() => setConfirmDialog(null)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition text-sm sm:text-base">
                     ยกเลิก
                   </button>
-                  <button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="flex-1 bg-rose-600 text-white font-bold py-3.5 rounded-xl hover:bg-rose-700 transition shadow-lg">
+                  <button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="flex-1 bg-rose-600 text-white font-bold py-3.5 rounded-xl hover:bg-rose-700 transition shadow-lg text-sm sm:text-base">
                     ตกลง
                   </button>
                 </div>
@@ -1111,28 +1109,27 @@
             </div>
           )}
 
-          {/* 📌 3. Popup สำหรับกรอกข้อความ แก้ไขข้อมูล (แทน prompt) */}
           {promptDialog && (
             <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+              <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
                 <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="material-icons-round text-3xl">edit</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2">ระบุข้อมูล</h3>
-                <p className="text-slate-600 mb-4">{promptDialog.message}</p>
+                <p className="text-slate-600 mb-4 text-sm sm:text-base">{promptDialog.message}</p>
                 <form onSubmit={(e) => { e.preventDefault(); promptDialog.onConfirm(promptValue); setPromptDialog(null); }}>
                   <input 
                     type="text" 
-                    className="w-full p-3.5 border border-slate-200 rounded-xl outline-none text-lg mb-6 text-center focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition bg-slate-50 font-medium"
+                    className="w-full p-3.5 border border-slate-200 rounded-xl outline-none text-base sm:text-lg mb-6 text-center focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition bg-slate-50 font-medium"
                     value={promptValue}
                     onChange={(e) => setPromptValue(e.target.value)}
                     autoFocus
                   />
                   <div className="flex gap-3">
-                    <button type="button" onClick={() => setPromptDialog(null)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition">
+                    <button type="button" onClick={() => setPromptDialog(null)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition text-sm sm:text-base">
                       ยกเลิก
                     </button>
-                    <button type="submit" className="flex-1 bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg">
+                    <button type="submit" className="flex-1 bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg text-sm sm:text-base">
                       บันทึก
                     </button>
                   </div>
