@@ -308,10 +308,14 @@
     const AdminView = ({ displayStatus, waitingTickets, calledTickets }) => {
       const [activeCounter, setActiveCounter] = useState("1");
       const [counters, setCounters] = useState([]);
+      const [categories, setCategories] = useState([]); 
       const [showQRModal, setShowQRModal] = useState(false);
+      
+      // 📌 State สำหรับตัวกรองหมวดหมู่คิว
+      const [queueFilter, setQueueFilter] = useState("ALL");
 
       useEffect(() => {
-        return db.collection('counters').onSnapshot(snapshot => {
+        const unsubCounters = db.collection('counters').onSnapshot(snapshot => {
           let list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           list.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
           setCounters(list);
@@ -319,10 +323,22 @@
             setActiveCounter(list[0].id);
           }
         });
+
+        // โหลดหมวดหมู่มาใช้เป็นตัวกรอง
+        const unsubCategories = db.collection('categories').onSnapshot(snapshot => {
+          setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+
+        return () => { unsubCounters(); unsubCategories(); };
       }, [activeCounter]);
 
       const currentCounterObj = counters.find(c => c.id === activeCounter);
       const isCurrentOpen = currentCounterObj ? currentCounterObj.isOpen !== false : true;
+
+      // 📌 กรองคิวรอตามที่เจ้าหน้าที่เลือก
+      const filteredWaitingTickets = queueFilter === "ALL" 
+        ? waitingTickets 
+        : waitingTickets.filter(t => t.category === queueFilter);
 
       const manageQueue = async (action, ticket) => {
         if (!isCurrentOpen) {
@@ -334,10 +350,10 @@
           if (action === 'CALL' || action === 'RECALL') {
             const now = Date.now();
             if (action === 'CALL') {
-              batch.update(db.collection('tickets').doc(ticket.id), { status: "called", calledAt: now });
+              // 📌 บันทึกด้วยว่า โต๊ะไหน (counter) เป็นคนเรียกคิวนี้
+              batch.update(db.collection('tickets').doc(ticket.id), { status: "called", calledAt: now, counter: activeCounter });
             } else if (action === 'RECALL') {
-              // 📌 อัปเดตเวลาการเรียกซ้ำ เพื่อให้หน้าจอลูกค้าแจ้งเตือนอีกครั้ง
-              batch.update(db.collection('tickets').doc(ticket.id), { calledAt: now });
+              batch.update(db.collection('tickets').doc(ticket.id), { calledAt: now, counter: activeCounter });
             }
             batch.set(db.collection('store_status').doc('display'), {
               currentQueue: ticket.queueString,
@@ -355,11 +371,11 @@
       };
 
       const handleCallNext = () => {
-        if (waitingTickets.length > 0) manageQueue('CALL', waitingTickets[0]);
-        else alert("ไม่มีคิวรอในขณะนี้");
+        // 📌 เวลาเรียกคิวถัดไป ให้เรียกจากคิว "ที่ถูกกรองแล้ว" เท่านั้น
+        if (filteredWaitingTickets.length > 0) manageQueue('CALL', filteredWaitingTickets[0]);
+        else alert(queueFilter === "ALL" ? "ไม่มีคิวรอในขณะนี้" : "ไม่มีคิวรอในหมวดหมู่ที่เลือก");
       };
 
-      // 📌 ฟังก์ชันดาวน์โหลด QR Code
       const handleDownloadQR = async () => {
         try {
           const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`;
@@ -373,7 +389,6 @@
           link.click();
           document.body.removeChild(link);
         } catch (e) {
-          // หากโดนบล็อกการโหลด ให้เปิดรูปแท็บใหม่แทน
           window.open(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`, '_blank');
         }
       };
@@ -429,8 +444,8 @@
                     <p className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</p>
                   </div>
                   <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
-                    <p className="text-[10px] sm:text-xs text-indigo-500 font-medium">คิวรอภาพรวม</p>
-                    <p className="text-xl sm:text-2xl font-bold text-indigo-600">{waitingTickets.length}</p>
+                    <p className="text-[10px] sm:text-xs text-indigo-500 font-medium">คิวรอในหมวดที่เลือก</p>
+                    <p className="text-xl sm:text-2xl font-bold text-indigo-600">{filteredWaitingTickets.length}</p>
                   </div>
                 </div>
 
@@ -454,7 +469,14 @@
                 {calledTickets.length === 0 && <p className="text-slate-400 text-sm text-center">ยังไม่มีประวัติ</p>}
                 {calledTickets.map(t => (
                   <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <span className="font-bold text-slate-700 text-sm sm:text-base">{t.queueString} <span className="text-xs sm:text-sm font-normal text-slate-400 ml-1 sm:ml-2 truncate max-w-[100px] sm:max-w-[150px] inline-block align-bottom">({t.name})</span></span>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-700 text-sm sm:text-base">
+                        {t.queueString} 
+                        {/* 📌 แสดงว่าใครเรียก */}
+                        <span className="text-indigo-500 ml-2 text-xs bg-indigo-50 px-2 py-0.5 rounded-md">โต๊ะ {t.counter || '-'}</span>
+                      </span>
+                      <span className="text-[10px] sm:text-xs text-slate-500 mt-1 truncate max-w-[150px]">{t.name}</span>
+                    </div>
                     <button onClick={() => manageQueue('RECALL', t)} className="btn-scale bg-orange-100 text-orange-600 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold hover:bg-orange-200 whitespace-nowrap">เรียกซ้ำ</button>
                   </div>
                 ))}
@@ -463,15 +485,31 @@
           </div>
 
           <div className="w-full lg:w-96 glass-card p-4 sm:p-6 rounded-[2rem] flex flex-col h-[400px] sm:h-[500px] lg:h-[700px]">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><span className="material-icons-round text-emerald-500">list_alt</span> โซนคิวรอทั้งหมด</h2>
+            {/* 📌 ตัวกรองหมวดหมู่คิวรอ */}
+            <div className="flex flex-col gap-2 mb-4 border-b border-slate-100 pb-4">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <span className="material-icons-round text-emerald-500">list_alt</span> โซนคิวรอ
+              </h2>
+              <select 
+                value={queueFilter} 
+                onChange={(e) => setQueueFilter(e.target.value)}
+                className="w-full p-2.5 border border-slate-200 rounded-xl text-sm sm:text-base font-medium bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="ALL">ดูคิวรอทั้งหมด (ทุกหมวดหมู่)</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>เฉพาะหมวด: {c.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
-              {waitingTickets.length === 0 ? (
+              {filteredWaitingTickets.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-slate-300">
                   <span className="material-icons-round text-5xl sm:text-6xl mb-2">check_circle</span>
-                  <p className="text-sm sm:text-base">เคลียร์คิวหมดแล้ว</p>
+                  <p className="text-sm sm:text-base text-center">ไม่มีคิวรอ<br/>ในหมวดหมู่ที่เลือก</p>
                 </div>
               ) : (
-                waitingTickets.map(t => (
+                filteredWaitingTickets.map(t => (
                   <div key={t.id} className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold flex-none">{t.queueString}</div>
@@ -490,7 +528,6 @@
             </div>
           </div>
 
-          {/* 📌 หน้าต่าง QR Code ที่เพิ่มปุ่มบันทึกภาพ */}
           {showQRModal && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
               <div className="bg-white p-6 sm:p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in border border-slate-100">
@@ -989,7 +1026,7 @@
     };
 
     /* 📺 2.4 จอแสดงผลทีวี (TV Display) */
-    const DisplayView = ({ displayStatus, waitingTickets, calledTickets, hideNavbar, setHideNavbar }) => { // 📌 ต้องรับ calledTickets เพิ่มมาด้วย
+    const DisplayView = ({ displayStatus, waitingTickets, calledTickets, hideNavbar, setHideNavbar }) => { 
       const [isStarted, setIsStarted] = useState(false);
       const lastPlayedRef = useRef(0);
       const [headerTitle, setHeaderTitle] = useState("ระบบคิวอัตโนมัติ Real-time Q-System");
@@ -1092,7 +1129,6 @@
               </div>
             </div>
 
-            {/* 📌 แบ่งโซนด้านขวาเป็น 2 ส่วน (คิวรอถัดไป & เรียกไปแล้ว) */}
             <div className="w-full lg:w-1/3 bg-slate-50 p-4 sm:p-6 lg:p-8 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-800">
               
               {/* โซนที่ 1: คิวรอถัดไป */}
@@ -1109,15 +1145,16 @@
                 </div>
               </div>
 
-              {/* โซนที่ 2: เรียกไปแล้ว */}
+              {/* 📌 โซนที่ 2: เรียกไปแล้ว (โชว์เบอร์โต๊ะด้วย) */}
               <div className="flex-1 flex flex-col border-t border-slate-200 pt-4">
                 <h3 className="text-lg sm:text-xl font-bold text-slate-500 mb-2 sm:mb-4 flex items-center gap-2 border-b border-slate-200 pb-2">
                   <span className="material-icons-round text-emerald-500 text-lg">history</span> เรียกไปแล้ว
                 </h3>
                 <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto no-scrollbar gap-2 lg:gap-3 opacity-80">
                   {calledTickets.slice(0, 4).map(t => (
-                    <div key={t.id} className="bg-slate-200 p-2 lg:p-3 rounded-xl shadow-inner border border-slate-300 text-center text-xl sm:text-2xl font-bold text-slate-600 tracking-wide min-w-[100px] lg:min-w-0 flex-none flex justify-center items-center px-4">
-                      {t.queueString}
+                    <div key={t.id} className="bg-slate-200 p-2 lg:p-3 rounded-xl shadow-inner border border-slate-300 text-center min-w-[100px] lg:min-w-0 flex-none flex flex-col justify-center items-center px-4">
+                      <span className="text-xl sm:text-2xl font-bold text-slate-600 tracking-wide leading-none">{t.queueString}</span>
+                      <span className="text-[10px] sm:text-xs text-emerald-700 font-bold mt-1 bg-emerald-100/50 px-2 py-0.5 rounded-md">โต๊ะ {t.counter || '-'}</span>
                     </div>
                   ))}
                 </div>
