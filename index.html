@@ -91,6 +91,9 @@
       const [myTicketId, setMyTicketId] = useState(null);
       const [myTicketData, setMyTicketData] = useState(null);
       const [showAlert, setShowAlert] = useState(false);
+      
+      // 📌 ตัวแปรอ้างอิงเพื่อเก็บเวลาเรียกคิวล่าสุด ใช้สำหรับตรวจจับการ "เรียกซ้ำ"
+      const prevCalledAt = useRef(0);
 
       useEffect(() => {
         return db.collection('categories').onSnapshot(snapshot => {
@@ -105,8 +108,12 @@
             const data = doc.data();
             setMyTicketData(data);
             if (data.status === 'called') {
-              setShowAlert(true);
-              if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+              // 📌 ตรวจจับว่าเวลา calledAt ถูกอัปเดตใหม่หรือไม่ (แสดงว่าโดนกด "เรียกซ้ำ")
+              if (data.calledAt > prevCalledAt.current) {
+                setShowAlert(true);
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                prevCalledAt.current = data.calledAt;
+              }
             }
           }
         });
@@ -230,7 +237,11 @@
                 <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[1.5rem] p-6 mb-6 border border-indigo-100 shadow-inner">
                   <p className="text-indigo-400 font-medium mb-1">หมายเลขคิวของคุณ</p>
                   <div className="text-6xl sm:text-7xl font-bold text-indigo-600 my-3 tracking-tighter">{myTicketData && myTicketData.queueString}</div>
-                  <p className="text-sm font-semibold text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full shadow-sm mb-3">{myTicketData && myTicketData.categoryName}</p>
+                  
+                  {/* 📌 เพิ่มการแสดงชื่อลูกค้าที่นี่ */}
+                  <p className="text-sm font-semibold text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full shadow-sm mb-3">
+                    คุณ {myTicketData && myTicketData.name} • {myTicketData && myTicketData.categoryName}
+                  </p>
                   
                   <div className="text-[10px] sm:text-xs text-slate-400 flex flex-wrap items-center justify-center gap-1 border-t border-indigo-100 pt-3">
                     <span className="material-icons-round text-sm">schedule</span>
@@ -278,7 +289,7 @@
       );
     };
 
-    /* 💻 2.2 หน้าแผงควบคุมพนักงาน (Admin View) */
+   /* 💻 2.2 หน้าแผงควบคุมพนักงาน (Admin View) */
     const AdminView = ({ displayStatus, waitingTickets, calledTickets }) => {
       const [activeCounter, setActiveCounter] = useState("1");
       const [counters, setCounters] = useState([]);
@@ -306,14 +317,19 @@
         try {
           const batch = db.batch();
           if (action === 'CALL' || action === 'RECALL') {
+            const now = Date.now();
             if (action === 'CALL') {
-              batch.update(db.collection('tickets').doc(ticket.id), { status: "called", calledAt: Date.now() });
+              batch.update(db.collection('tickets').doc(ticket.id), { status: "called", calledAt: now });
+            } else if (action === 'RECALL') {
+              // 📌 อัปเดตเวลาการเรียกซ้ำ เพื่อให้หน้าจอลูกค้าแจ้งเตือนอีกครั้ง
+              batch.update(db.collection('tickets').doc(ticket.id), { calledAt: now });
             }
             batch.set(db.collection('store_status').doc('display'), {
               currentQueue: ticket.queueString,
               counter: activeCounter,
-              lastTrigger: Date.now()
+              lastTrigger: now
             }, { merge: true });
+
           } else if (action === 'SKIP') {
             batch.update(db.collection('tickets').doc(ticket.id), { status: "skipped" });
           }
@@ -326,6 +342,25 @@
       const handleCallNext = () => {
         if (waitingTickets.length > 0) manageQueue('CALL', waitingTickets[0]);
         else alert("ไม่มีคิวรอในขณะนี้");
+      };
+
+      // 📌 ฟังก์ชันดาวน์โหลด QR Code
+      const handleDownloadQR = async () => {
+        try {
+          const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`;
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = 'QR-Queue-System.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch (e) {
+          // หากโดนบล็อกการโหลด ให้เปิดรูปแท็บใหม่แทน
+          window.open(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`, '_blank');
+        }
       };
 
       return (
@@ -440,15 +475,21 @@
             </div>
           </div>
 
+          {/* 📌 หน้าต่าง QR Code ที่เพิ่มปุ่มบันทึกภาพ */}
           {showQRModal && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
               <div className="bg-white p-6 sm:p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in border border-slate-100">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">สแกนรับคิวออนไลน์</h2>
-                <p className="text-xs sm:text-sm text-slate-500 mb-6">ลูกค้าสามารถติดตามคิวผ่านมือถือได้ทันที</p>
+                <p className="text-xs sm:text-sm text-slate-500 mb-4">ลูกค้าสามารถติดตามคิวผ่านมือถือได้ทันที</p>
                 <div className="bg-slate-50 p-4 rounded-2xl inline-block mb-6 border border-slate-100">
-                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`} alt="QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mx-auto mix-blend-multiply" />
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`} alt="QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mx-auto mix-blend-multiply" />
                 </div>
-                <button onClick={() => setShowQRModal(false)} className="btn-scale bg-slate-100 text-slate-700 font-bold px-8 py-3.5 sm:py-4 rounded-xl w-full hover:bg-slate-200 text-sm sm:text-base">ปิดหน้าต่าง</button>
+                <div className="flex gap-2">
+                  <button onClick={handleDownloadQR} className="btn-scale bg-indigo-600 text-white font-bold px-4 py-3 sm:py-3.5 rounded-xl flex-1 hover:bg-indigo-700 text-sm sm:text-base flex items-center justify-center gap-1 shadow-md">
+                    <span className="material-icons-round text-base">download</span> บันทึกภาพ
+                  </button>
+                  <button onClick={() => setShowQRModal(false)} className="btn-scale bg-slate-100 text-slate-700 font-bold px-4 py-3 sm:py-3.5 rounded-xl flex-1 hover:bg-slate-200 text-sm sm:text-base">ปิดหน้าต่าง</button>
+                </div>
               </div>
             </div>
           )}
@@ -456,7 +497,7 @@
       );
     };
 
-    /* 🛠️ 2.3 หน้าจัดการระบบหลังบ้าน (Manager Panel) */
+  /* 🛠️ 2.3 หน้าจัดการระบบหลังบ้าน (Manager Panel) */
     const ManagerView = ({ setModalMessage, setConfirmDialog, setPromptDialog, setPromptValue }) => {
       const [tickets, setTickets] = useState([]);
       const [categories, setCategories] = useState([]);
@@ -466,7 +507,13 @@
       const [newCatName, setNewCatName] = useState("");
       const [newCounterId, setNewCounterId] = useState("");
       const [newCounterName, setNewCounterName] = useState("");
+      
       const [tvHeader, setTvHeader] = useState("");
+      
+      // 📌 State สำหรับตั้งค่าประโยคเสียงอ่าน
+      const [speechPrefix, setSpeechPrefix] = useState("ขอเชิญหมายเลข");
+      const [speechMiddle, setSpeechMiddle] = useState("ที่ช่องบริการ");
+      const [speechSuffix, setSpeechSuffix] = useState("ค่ะ");
 
       const [floorConfig, setFloorConfig] = useState({
         nurse: { x: 20, y: 20 },
@@ -496,8 +543,15 @@
           else db.collection('store_status').doc('floor_config').set(floorConfig);
         });
 
+        // 📌 โหลดข้อมูลการตั้งค่าทีวีและเสียง
         db.collection('store_status').doc('display').get().then(doc => {
-          if (doc.exists && doc.data().tvHeaderTitle) setTvHeader(doc.data().tvHeaderTitle);
+          if (doc.exists) {
+            const data = doc.data();
+            if (data.tvHeaderTitle) setTvHeader(data.tvHeaderTitle);
+            if (data.speechPrefix) setSpeechPrefix(data.speechPrefix);
+            if (data.speechMiddle) setSpeechMiddle(data.speechMiddle);
+            if (data.speechSuffix !== undefined) setSpeechSuffix(data.speechSuffix);
+          }
         });
 
         return () => { unsubTickets(); unsubCats(); unsubCounters(); };
@@ -532,7 +586,6 @@
 
       const handleMouseUp = () => setDraggingId(null);
 
-      // --- ฟังก์ชันจัดการข้อมูล ---
       const handleEditName = (ticketId, currentName) => {
         setPromptValue(currentName);
         setPromptDialog({
@@ -635,6 +688,16 @@
         setModalMessage("บันทึกแถบหัวข้อจอแสดงผล (TV) เรียบร้อยแล้ว!");
       };
 
+      // 📌 ฟังก์ชันบันทึกการตั้งค่าเสียงอ่านคิว
+      const handleSaveSpeechSettings = async () => {
+        await db.collection('store_status').doc('display').set({ 
+          speechPrefix: speechPrefix.trim(),
+          speechMiddle: speechMiddle.trim(),
+          speechSuffix: speechSuffix.trim()
+        }, { merge: true });
+        setModalMessage("บันทึกการตั้งค่าประโยคเสียงอ่านคิวเรียบร้อยแล้ว!");
+      };
+
       const handleResetQueue = () => {
         setConfirmDialog({
           message: "⚠️ คำเตือน: การรีเซ็ตจะล้างข้อมูลคิวทั้งหมดของวันนี้ ข้อมูลที่ถูกลบจะไม่สามารถกู้คืนได้ ต้องการดำเนินการต่อหรือไม่?",
@@ -658,6 +721,7 @@
             <p className="text-sm md:text-base text-slate-500">จัดการผังโต๊ะเจ้าหน้าที่แบบจำลองห้อง, หมวดหมู่บริการ Kiosk, หัวข้อจอทีวี และจัดการข้อมูลคิว</p>
           </div>
 
+          {/* ผังห้อง */}
           <div className="bg-white p-4 md:p-6 rounded-[2rem] shadow-lg border border-slate-100">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
               <h3 className="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -666,7 +730,6 @@
               <p className="text-[10px] md:text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-md w-fit">💡 เลื่อนซ้ายขวาเพื่อดูผังห้องได้</p>
             </div>
 
-            {/* 📌 ทำให้กรอบจำลองผังห้องเลื่อนซ้ายขวาได้เมื่อหน้าจอแคบเกินไป */}
             <div className="w-full overflow-x-auto pb-4 no-scrollbar">
               <div 
                 id="floor-plan-area" 
@@ -710,7 +773,7 @@
                   const posX = c.posX || 200;
                   const posY = c.posY || 280;
                   const isOpen = c.isOpen !== false;
-                  const isNurse = c.id === 'พยบ' || (c.name && c.name.includes('พยาบาล'));
+                  const isNurse = c.id === 'งานพยาบาล' || (c.name && c.name.includes('พยาบาล'));
 
                   if (isNurse) {
                     return (
@@ -766,13 +829,14 @@
             </div>
           </div>
 
+          {/* โซนสร้างโต๊ะและหมวดหมู่ */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
             <div className="bg-white p-5 md:p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col">
               <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="material-icons-round text-indigo-500">meeting_room</span> ตั้งค่าโต๊ะเจ้าหน้าที่ (Counters)
               </h3>
               <form onSubmit={handleAddCounter} className="flex flex-col sm:flex-row gap-2 mb-4">
-                <input type="text" placeholder="เลขโต๊ะ (เช่น 1)" className="w-full sm:w-24 p-3 border border-slate-200 rounded-xl font-bold outline-none text-sm md:text-base" value={newCounterId} onChange={e => setNewCounterId(e.target.value)} maxLength={3} />
+                <input type="text" placeholder="เลขโต๊ะ (เช่น 1)" className="w-full sm:w-24 p-3 border border-slate-200 rounded-xl font-bold outline-none text-sm md:text-base" value={newCounterId} onChange={e => setNewCounterId(e.target.value)} maxLength={15} />
                 <input type="text" placeholder="ชื่อโต๊ะ (เช่น ช่องบริการ 1)" className="flex-1 p-3 border border-slate-200 rounded-xl outline-none text-sm md:text-base" value={newCounterName} onChange={e => setNewCounterName(e.target.value)} />
                 <button type="submit" className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 text-sm md:text-base whitespace-nowrap">เพิ่มโต๊ะ</button>
               </form>
@@ -840,13 +904,41 @@
             </div>
           </div>
 
-          <div className="bg-white p-5 md:p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col md:flex-row items-center gap-4">
-            <div className="flex-1 w-full">
+          {/* 📌 โซนตั้งค่าหัวข้อทีวี และ เสียงอ่านคิว */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <div className="bg-white p-5 md:p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col">
               <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-1 flex items-center gap-2"><span className="material-icons-round text-indigo-500">tv</span> แก้ไขแถบหัวข้อจอทีวี</h3>
-              <p className="text-xs md:text-sm text-slate-500 mb-3">ข้อความนี้จะแสดงพาดหัวอยู่ด้านบนสุดของหน้าจอแสดงผลทีวี</p>
-              <input type="text" placeholder="เช่น คลินิกสุขภาพชุมชน - ยินดีต้อนรับ" className="w-full p-3.5 border border-slate-200 rounded-xl outline-none text-base md:text-lg" value={tvHeader} onChange={e => setTvHeader(e.target.value)} />
+              <p className="text-xs md:text-sm text-slate-500 mb-4">ข้อความนี้จะแสดงพาดหัวอยู่ด้านบนสุดของหน้าจอแสดงผลทีวี</p>
+              
+              <div className="flex-1 flex flex-col justify-center mb-4">
+                 <input type="text" placeholder="เช่น คลินิกสุขภาพชุมชน - ยินดีต้อนรับ" className="w-full p-4 border border-slate-200 rounded-xl outline-none text-base md:text-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition" value={tvHeader} onChange={e => setTvHeader(e.target.value)} />
+              </div>
+              <button onClick={handleSaveTvHeader} className="w-full bg-emerald-600 text-white font-bold px-8 py-3.5 md:py-4 rounded-xl shadow-md hover:bg-emerald-700 transition mt-auto text-sm md:text-base">บันทึกหัวข้อทีวี</button>
             </div>
-            <button onClick={handleSaveTvHeader} className="w-full md:w-auto bg-emerald-600 text-white font-bold px-8 py-3.5 md:py-4 rounded-xl shadow-md hover:bg-emerald-700 transition mt-auto text-sm md:text-base">บันทึกหัวข้อทีวี</button>
+
+            {/* 📌 กล่องตั้งค่าเสียงอ่านคิวแบบใหม่ */}
+            <div className="bg-white p-5 md:p-6 rounded-[2rem] shadow-lg border border-slate-100 flex flex-col">
+              <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-1 flex items-center gap-2"><span className="material-icons-round text-indigo-500">record_voice_over</span> ตั้งค่าประโยคเสียงอ่านคิว</h3>
+              <p className="text-xs md:text-sm text-slate-500 mb-4">กำหนดคำพูดที่ต้องการให้ระบบทีวีอ่านออกเสียง</p>
+              
+              <div className="flex-1 space-y-3 mb-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-600 ml-1">คำขึ้นต้น <span className="font-normal text-slate-400">(ก่อนบอกเลขคิว)</span></label>
+                  <input type="text" className="w-full p-3 border border-slate-200 rounded-xl outline-none text-sm mt-1 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition" value={speechPrefix} onChange={e => setSpeechPrefix(e.target.value)} placeholder="เช่น ขอเชิญหมายเลข" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 ml-1">คำเชื่อม <span className="font-normal text-slate-400">(ก่อนบอกโต๊ะ)</span></label>
+                    <input type="text" className="w-full p-3 border border-slate-200 rounded-xl outline-none text-sm mt-1 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition" value={speechMiddle} onChange={e => setSpeechMiddle(e.target.value)} placeholder="เช่น ที่ช่องบริการ" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 ml-1">คำลงท้าย</label>
+                    <input type="text" className="w-full p-3 border border-slate-200 rounded-xl outline-none text-sm mt-1 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition" value={speechSuffix} onChange={e => setSpeechSuffix(e.target.value)} placeholder="เช่น ค่ะ" />
+                  </div>
+                </div>
+              </div>
+              <button onClick={handleSaveSpeechSettings} className="w-full bg-emerald-600 text-white font-bold px-8 py-3.5 md:py-4 rounded-xl shadow-md hover:bg-emerald-700 transition mt-auto text-sm md:text-base">บันทึกประโยคเสียง</button>
+            </div>
           </div>
 
           <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100">
@@ -882,17 +974,31 @@
     };
 
     /* 📺 2.4 จอแสดงผลทีวี (TV Display) */
-    const DisplayView = ({ displayStatus, waitingTickets, hideNavbar, setHideNavbar }) => {
+    const DisplayView = ({ displayStatus, waitingTickets, calledTickets, hideNavbar, setHideNavbar }) => { // 📌 ต้องรับ calledTickets เพิ่มมาด้วย
       const [isStarted, setIsStarted] = useState(false);
       const lastPlayedRef = useRef(0);
       const [headerTitle, setHeaderTitle] = useState("ระบบคิวอัตโนมัติ Real-time Q-System");
+      
+      const [speechSettings, setSpeechSettings] = useState({
+        prefix: "ขอเชิญหมายเลข",
+        middle: "ที่ช่องบริการ",
+        suffix: "ค่ะ"
+      });
 
       useEffect(() => {
-        db.collection('store_status').doc('display').onSnapshot(doc => {
-          if (doc.exists && doc.data().tvHeaderTitle) {
-            setHeaderTitle(doc.data().tvHeaderTitle);
+        const unsub = db.collection('store_status').doc('display').onSnapshot(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            if (data.tvHeaderTitle) setHeaderTitle(data.tvHeaderTitle);
+            
+            setSpeechSettings({
+              prefix: data.speechPrefix !== undefined ? data.speechPrefix : "ขอเชิญหมายเลข",
+              middle: data.speechMiddle !== undefined ? data.speechMiddle : "ที่ช่องบริการ",
+              suffix: data.speechSuffix !== undefined ? data.speechSuffix : "ค่ะ"
+            });
           }
         });
+        return () => unsub();
       }, []);
 
       useEffect(() => {
@@ -912,11 +1018,11 @@
           setTimeout(() => {
             if ('speechSynthesis' in window && displayStatus.currentQueue !== "-") {
               window.speechSynthesis.cancel();
-              const text = `ขอเชิญหมายเลข ${displayStatus.currentQueue.split('').join(' ')} ที่ช่องบริการที่ ${displayStatus.counter}ค่ะ`;
+              const text = `${speechSettings.prefix} ${displayStatus.currentQueue.split('').join(' ')} ${speechSettings.middle} ${displayStatus.counter} ${speechSettings.suffix}`;
               
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'th-TH'; 
-              utterance.rate = 0.85; 
+              utterance.rate = 0.70; 
               utterance.pitch = 1.2;
               
               const voices = window.speechSynthesis.getVoices();
@@ -927,7 +1033,7 @@
             }
           }, 1500);
         }
-      }, [displayStatus.lastTrigger, isStarted]);
+      }, [displayStatus.lastTrigger, isStarted, speechSettings]);
 
       if (!isStarted) {
         return (
@@ -957,14 +1063,12 @@
             </button>
           </div>
 
-          {/* 📌 หน้าจอทีวี ปรับโครงสร้างให้รองรับแนวตั้งบนจอมือถือ/แท็บเล็ต */}
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             <div className="w-full lg:w-2/3 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-6 sm:p-10 flex flex-col justify-center items-center relative overflow-hidden flex-1 lg:flex-auto min-h-[50%]">
               <div className="absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-indigo-600 rounded-full mix-blend-screen filter blur-[100px] md:blur-[120px] opacity-20"></div>
               <div className="absolute bottom-0 left-0 w-[200px] md:w-[400px] h-[200px] md:h-[400px] bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] md:blur-[100px] opacity-20"></div>
               
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium mb-1 md:mb-2 text-indigo-200 tracking-wide z-10">หมายเลขคิว</h2>
-              {/* ย่อขนาดอักษรให้อัตโนมัติเมื่อจอเล็ก */}
               <div id="tv-queue" className="text-7xl sm:text-[10rem] md:text-[12rem] lg:text-[14rem] font-bold leading-none tracking-tighter my-1 md:my-2 z-10 text-white text-glow transition-all duration-300">
                 {displayStatus.currentQueue}
               </div>
@@ -973,18 +1077,37 @@
               </div>
             </div>
 
+            {/* 📌 แบ่งโซนด้านขวาเป็น 2 ส่วน (คิวรอถัดไป & เรียกไปแล้ว) */}
             <div className="w-full lg:w-1/3 bg-slate-50 p-4 sm:p-6 lg:p-8 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-800">
-              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 mb-4 lg:mb-6 flex items-center gap-2 lg:gap-3 border-b border-slate-200 pb-2 lg:pb-4">
-                <span className="w-2.5 h-2.5 lg:w-3.5 lg:h-3.5 rounded-full bg-indigo-500"></span> คิวรอถัดไป
-              </h3>
-              {/* เปลี่ยนรายการคิวรอให้เลื่อนแนวนอนได้เมื่อเป็นหน้าจอเล็กแนวตั้ง */}
-              <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto no-scrollbar gap-3 lg:space-y-4 lg:gap-0 pb-2 lg:pb-0">
-                {waitingTickets.slice(0, 5).map(t => (
-                  <div key={t.id} className="bg-white p-3 lg:p-4 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 text-center text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-700 tracking-wide min-w-[120px] lg:min-w-0 flex-none">
-                    {t.queueString}
-                  </div>
-                ))}
+              
+              {/* โซนที่ 1: คิวรอถัดไป */}
+              <div className="flex-1 flex flex-col mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-2 sm:mb-4 flex items-center gap-2 border-b border-slate-200 pb-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> คิวรอถัดไป
+                </h3>
+                <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto no-scrollbar gap-2 lg:gap-3">
+                  {waitingTickets.slice(0, 4).map(t => (
+                    <div key={t.id} className="bg-white p-3 lg:p-4 rounded-xl shadow-sm border border-slate-200 text-center text-2xl sm:text-3xl font-bold text-slate-700 tracking-wide min-w-[120px] lg:min-w-0 flex-none">
+                      {t.queueString}
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* โซนที่ 2: เรียกไปแล้ว */}
+              <div className="flex-1 flex flex-col border-t border-slate-200 pt-4">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-500 mb-2 sm:mb-4 flex items-center gap-2 border-b border-slate-200 pb-2">
+                  <span className="material-icons-round text-emerald-500 text-lg">history</span> เรียกไปแล้ว
+                </h3>
+                <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto no-scrollbar gap-2 lg:gap-3 opacity-80">
+                  {calledTickets.slice(0, 4).map(t => (
+                    <div key={t.id} className="bg-slate-200 p-2 lg:p-3 rounded-xl shadow-inner border border-slate-300 text-center text-xl sm:text-2xl font-bold text-slate-600 tracking-wide min-w-[100px] lg:min-w-0 flex-none flex justify-center items-center px-4">
+                      {t.queueString}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -1009,7 +1132,11 @@
       const [confirmDialog, setConfirmDialog] = useState(null); 
       const [promptDialog, setPromptDialog] = useState(null);
       const [promptValue, setPromptValue] = useState("");
+      
       const [hideNavbar, setHideNavbar] = useState(false);
+      
+      // 📌 State ใหม่สำหรับควบคุมการเปิด/ปิด Sidebar บนมือถือ
+      const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
       useEffect(() => {
         const unsubStore = db.collection('store_status').doc('display').onSnapshot(doc => {
@@ -1035,45 +1162,102 @@
       const isIsolated = urlMode === 'kiosk' || urlMode === 'tv' || urlMode === 'manager';
 
       return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex h-screen overflow-hidden">
+          
+          {/* ========================================== */}
+          {/* 📌 แถบเมนูด้านข้าง (Sidebar) สไตล์ YouTube */}
+          {/* ========================================== */}
           {!isIsolated && !hideNavbar && (
-            <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 pt-4 md:pt-6 px-4 md:px-10 z-50">
-              
-              <div className="flex items-center gap-3 bg-white/70 backdrop-blur-md px-5 py-2.5 rounded-full shadow-sm border border-white/40 cursor-default w-full md:w-auto justify-center">
-                <img 
-                  src="https://cdn-icons-png.flaticon.com/512/2913/2913076.png" 
-                  alt="Logo" 
-                  className="w-6 h-6 md:w-8 md:h-8 object-contain" 
-                />
-                <span className="font-bold text-indigo-700 text-base md:text-lg tracking-wide">Q-System</span>
-              </div>
+            <>
+              {/* พื้นหลังสีดำจางๆ เวลาเปิดเมนูบนมือถือ */}
+              {isSidebarOpen && (
+                <div 
+                  className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden" 
+                  onClick={() => setIsSidebarOpen(false)}
+                ></div>
+              )}
 
-              {/* 📌 แถบเมนู ปรับให้เลื่อนสไลด์ซ้ายขวาได้เมื่อเปิดบนจอมือถือเล็กๆ */}
-              <nav className="bg-white/70 backdrop-blur-md shadow-sm border border-white/40 rounded-full p-1.5 flex gap-1 overflow-x-auto no-scrollbar w-full md:w-auto snap-x snap-mandatory">
-                <button onClick={() => setView('kiosk')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'kiosk' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">touch_app</span> รับคิว</button>
-                <button onClick={() => setView('admin')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">admin_panel_settings</span> แผงพนักงาน</button>
-                <button onClick={() => setView('manager')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'manager' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">settings</span> จัดการระบบ</button>
-                <button onClick={() => setView('tv')} className={`snap-center shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold transition-all flex items-center gap-2 text-sm md:text-base ${view === 'tv' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}><span className="material-icons-round text-sm md:text-base">tv</span> จอทีวี</button>
-              </nav>
-              
-            </div>
+              <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white/90 backdrop-blur-xl shadow-2xl md:shadow-lg border-r border-white/40 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col`}>
+                
+                {/* โลโก้ด้านบนของเมนู */}
+                <div className="h-16 md:h-20 flex items-center justify-between px-6 border-b border-slate-100 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2913/2913076.png" alt="Logo" className="w-8 h-8 object-contain" />
+                    <span className="font-bold text-indigo-700 text-xl tracking-wide">Q-System</span>
+                  </div>
+                  {/* ปุ่มกากบาทปิดเมนูสำหรับมือถือ */}
+                  <button className="md:hidden text-slate-400 hover:text-rose-500 transition p-1" onClick={() => setIsSidebarOpen(false)}>
+                    <span className="material-icons-round">close</span>
+                  </button>
+                </div>
+
+                {/* รายการปุ่มเมนูแนวตั้ง */}
+                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto no-scrollbar">
+                  <button onClick={() => { setView('kiosk'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${view === 'kiosk' ? 'bg-indigo-50 text-indigo-700 font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600'}`}>
+                    <span className="material-icons-round">touch_app</span> 
+                    <span className="text-base">รับคิว</span>
+                  </button>
+                  <button onClick={() => { setView('admin'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${view === 'admin' ? 'bg-indigo-50 text-indigo-700 font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600'}`}>
+                    <span className="material-icons-round">admin_panel_settings</span> 
+                    <span className="text-base">แผงพนักงาน</span>
+                  </button>
+                  <button onClick={() => { setView('manager'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${view === 'manager' ? 'bg-indigo-50 text-indigo-700 font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600'}`}>
+                    <span className="material-icons-round">settings</span> 
+                    <span className="text-base">จัดการระบบ</span>
+                  </button>
+                  
+                  <div className="pt-4 pb-2">
+                    <div className="border-t border-slate-100"></div>
+                  </div>
+                  
+                  <button onClick={() => { setView('tv'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${view === 'tv' ? 'bg-slate-800 text-white font-bold shadow-md' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'}`}>
+                    <span className="material-icons-round">tv</span> 
+                    <span className="text-base">จอทีวี (TV Display)</span>
+                  </button>
+                </nav>
+                
+                {/* ลายเซ็นต์เล็กๆ ด้านล่างสุดของเมนู */}
+                <div className="p-4 text-center text-[10px] text-slate-400 border-t border-slate-100 shrink-0">
+                  Q-System Pro Max v2.0<br/>Smart Queue Management
+                </div>
+              </aside>
+            </>
           )}
 
-          <main className="flex-1 px-4 flex flex-col justify-center relative">
-            {view === 'kiosk' && <CustomerView displayStatus={displayStatus} allWaitingTickets={waitingTickets} />}
-            {view === 'admin' && <AdminView displayStatus={displayStatus} waitingTickets={waitingTickets} calledTickets={calledTickets} />}
-            {view === 'manager' && (
-              <ManagerView 
-                setModalMessage={setModalMessage} 
-                setConfirmDialog={setConfirmDialog} 
-                setPromptDialog={setPromptDialog} 
-                setPromptValue={setPromptValue} 
-              />
+          {/* ========================================== */}
+          {/* 📌 พื้นที่เนื้อหาหลักฝั่งขวา */}
+          {/* ========================================== */}
+          <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+            
+            {/* แถบเรียกเมนูด้านบน (โผล่มาเฉพาะบนหน้าจอมือถือ/แท็บเล็ตเล็ก) */}
+            {!isIsolated && !hideNavbar && (
+              <header className="md:hidden h-16 bg-white/80 backdrop-blur-md shadow-sm flex items-center px-4 z-30 shrink-0 border-b border-slate-100">
+                <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 rounded-xl hover:bg-slate-100 transition flex items-center justify-center">
+                  <span className="material-icons-round text-2xl">menu</span>
+                </button>
+                <span className="ml-3 font-bold text-indigo-700 text-lg tracking-wide">Q-System</span>
+              </header>
             )}
-            {view === 'tv' && <DisplayView displayStatus={displayStatus} waitingTickets={waitingTickets} hideNavbar={hideNavbar} setHideNavbar={setHideNavbar} />}
-          </main>
 
-          {/* 📌 Popup Alerts ต่างๆ */}
+            {/* ส่วนแสดงผลแต่ละหน้าต่าง */}
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 flex flex-col relative no-scrollbar">
+              {view === 'kiosk' && <CustomerView displayStatus={displayStatus} allWaitingTickets={waitingTickets} />}
+              {view === 'admin' && <AdminView displayStatus={displayStatus} waitingTickets={waitingTickets} calledTickets={calledTickets} />}
+              {view === 'manager' && (
+                <ManagerView 
+                  setModalMessage={setModalMessage} 
+                  setConfirmDialog={setConfirmDialog} 
+                  setPromptDialog={setPromptDialog} 
+                  setPromptValue={setPromptValue} 
+                />
+              )}
+              {view === 'tv' && <DisplayView displayStatus={displayStatus} waitingTickets={waitingTickets} calledTickets={calledTickets} hideNavbar={hideNavbar} setHideNavbar={setHideNavbar} />}
+            </main>
+          </div>
+
+          {/* ========================================== */}
+          {/* 📌 Popups แจ้งเตือนต่างๆ */}
+          {/* ========================================== */}
           {modalMessage && (
             <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
               <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
