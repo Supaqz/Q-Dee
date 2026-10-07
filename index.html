@@ -92,7 +92,6 @@
       const [myTicketData, setMyTicketData] = useState(null);
       const [showAlert, setShowAlert] = useState(false);
       
-      // 📌 ตัวแปรอ้างอิงเพื่อเก็บเวลาเรียกคิวล่าสุด ใช้สำหรับตรวจจับการ "เรียกซ้ำ"
       const prevCalledAt = useRef(0);
 
       useEffect(() => {
@@ -108,10 +107,21 @@
             const data = doc.data();
             setMyTicketData(data);
             if (data.status === 'called') {
-              // 📌 ตรวจจับว่าเวลา calledAt ถูกอัปเดตใหม่หรือไม่ (แสดงว่าโดนกด "เรียกซ้ำ")
               if (data.calledAt > prevCalledAt.current) {
                 setShowAlert(true);
-                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                
+                // 🔔 1. เล่นเสียงกระดิ่งสำหรับลูกค้า
+                const chime = document.getElementById('customer-chime');
+                if (chime) {
+                  chime.currentTime = 0;
+                  chime.play().catch(e => console.log("รอให้ลูกค้าแตะหน้าจอเพื่ออนุญาตเสียง", e));
+                }
+
+                // 📳 2. สั่นหน้าจอ (ทำงานเฉพาะบน Android, ส่วน iPhone จะมีแค่เสียง)
+                if (navigator.vibrate) {
+                  navigator.vibrate([300, 100, 300, 100, 300]);
+                }
+                
                 prevCalledAt.current = data.calledAt;
               }
             }
@@ -180,112 +190,117 @@
       };
 
       return (
-        <div className="animate-fade-in w-full max-w-md mx-auto pt-4 md:pt-10 pb-10">
-          <div className="glass-card p-6 sm:p-10 rounded-[2rem] text-center relative">
-            {step === 1 && (
-              <div className="animate-fade-in">
-                <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="material-icons-round text-3xl">touch_app</span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับ</h1>
-                <p className="text-slate-500 mb-8 font-light text-sm sm:text-base">กรุณาเลือกบริการที่ต้องการ</p>
-                {categories.length === 0 ? (
-                  <p className="text-slate-400 py-6">ยังไม่มีหมวดหมู่บริการในระบบ</p>
-                ) : (
-                  <div className="space-y-4">
-                    {categories.map(cat => {
-                      const isOpen = cat.isOpen !== false;
-                      return (
-                        <button 
-                          key={cat.id} 
-                          onClick={() => isOpen && handleSelectCategory(cat)} 
-                          disabled={!isOpen}
-                          className={`btn-scale w-full bg-gradient-to-r ${cat.style || 'from-indigo-500 to-blue-600'} text-white text-lg sm:text-xl font-semibold py-4 sm:py-5 rounded-2xl flex items-center justify-between px-4 sm:px-6 shadow-lg ${!isOpen ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
-                        >
-                          <div className="flex items-center gap-3 sm:gap-4">
-                            <span className="bg-white/20 px-3 py-1 rounded-lg text-xl sm:text-2xl">{cat.id}</span> 
-                            <span>{cat.name}</span>
-                          </div>
-                          <span className="text-xs sm:text-sm font-normal bg-black/20 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
-                            {isOpen ? 'เปิดบริการ' : 'ปิด'}
-                          </span>
-                        </button>
-                      );
-                    })}
+        <React.Fragment>
+          {/* 📌 เพิ่มซ่อน Audio ไว้ใช้สำหรับแจ้งเตือนลูกค้า */}
+          <audio id="customer-chime" src="https://actions.google.com/sounds/v1/alarms/chime_bell_ding.ogg" preload="auto"></audio>
+
+          <div className="animate-fade-in w-full max-w-md mx-auto pt-4 md:pt-10 pb-10">
+            <div className="glass-card p-6 sm:p-10 rounded-[2rem] text-center relative">
+              {step === 1 && (
+                <div className="animate-fade-in">
+                  <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="material-icons-round text-3xl">touch_app</span>
                   </div>
-                )}
-              </div>
-            )}
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับ</h1>
+                  <p className="text-slate-500 mb-8 font-light text-sm sm:text-base">กรุณาเลือกบริการที่ต้องการ</p>
+                  {categories.length === 0 ? (
+                    <p className="text-slate-400 py-6">ยังไม่มีหมวดหมู่บริการในระบบ</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {categories.map(cat => {
+                        const isOpen = cat.isOpen !== false;
+                        return (
+                          <button 
+                            key={cat.id} 
+                            onClick={() => isOpen && handleSelectCategory(cat)} 
+                            disabled={!isOpen}
+                            className={`btn-scale w-full bg-gradient-to-r ${cat.style || 'from-indigo-500 to-blue-600'} text-white text-lg sm:text-xl font-semibold py-4 sm:py-5 rounded-2xl flex items-center justify-between px-4 sm:px-6 shadow-lg ${!isOpen ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                          >
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              <span className="bg-white/20 px-3 py-1 rounded-lg text-xl sm:text-2xl">{cat.id}</span> 
+                              <span>{cat.name}</span>
+                            </div>
+                            <span className="text-xs sm:text-sm font-normal bg-black/20 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
+                              {isOpen ? 'เปิดบริการ' : 'ปิด'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {step === 2 && (
-              <div className="animate-fade-in">
-                <button onClick={() => setStep(1)} className="text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 font-medium"><span className="material-icons-round text-sm">arrow_back</span> ย้อนกลับ</button>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">ระบุชื่อของคุณ</h2>
-                <p className="text-slate-500 mb-6 text-sm">แผนก: <span className="font-semibold text-indigo-600">{selectedCat && selectedCat.name}</span></p>
-                <form onSubmit={handleReserve} className="space-y-4">
-                  <input type="text" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น..." className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-lg bg-slate-50 outline-none" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} autoFocus />
-                  <button type="submit" disabled={loading} className="btn-scale w-full bg-slate-800 text-white font-semibold py-4 rounded-2xl text-xl hover:bg-slate-900 transition flex justify-center items-center gap-2 shadow-xl">
-                    {loading ? <span className="material-icons-round animate-spin">refresh</span> : <span className="material-icons-round">how_to_reg</span>}
-                    ยืนยันรับคิว
-                  </button>
-                </form>
-              </div>
-            )}
+              {step === 2 && (
+                <div className="animate-fade-in">
+                  <button onClick={() => setStep(1)} className="text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 font-medium"><span className="material-icons-round text-sm">arrow_back</span> ย้อนกลับ</button>
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">ระบุชื่อของคุณ</h2>
+                  <p className="text-slate-500 mb-6 text-sm">แผนก: <span className="font-semibold text-indigo-600">{selectedCat && selectedCat.name}</span></p>
+                  <form onSubmit={handleReserve} className="space-y-4">
+                    <input type="text" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น..." className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-lg bg-slate-50 outline-none" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} autoFocus />
+                    <button type="submit" disabled={loading} className="btn-scale w-full bg-slate-800 text-white font-semibold py-4 rounded-2xl text-xl hover:bg-slate-900 transition flex justify-center items-center gap-2 shadow-xl">
+                      {loading ? <span className="material-icons-round animate-spin">refresh</span> : <span className="material-icons-round">how_to_reg</span>}
+                      ยืนยันรับคิว
+                    </button>
+                  </form>
+                </div>
+              )}
 
-            {step === 3 && myTicketData && (
-              <div className="animate-fade-in">
-                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[1.5rem] p-6 mb-6 border border-indigo-100 shadow-inner">
-                  <p className="text-indigo-400 font-medium mb-1">หมายเลขคิวของคุณ</p>
-                  <div className="text-6xl sm:text-7xl font-bold text-indigo-600 my-3 tracking-tighter">{myTicketData && myTicketData.queueString}</div>
+              {step === 3 && myTicketData && (
+                <div className="animate-fade-in">
+                  <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[1.5rem] p-6 mb-6 border border-indigo-100 shadow-inner">
+                    <p className="text-indigo-400 font-medium mb-1">หมายเลขคิวของคุณ</p>
+                    <div className="text-6xl sm:text-7xl font-bold text-indigo-600 my-3 tracking-tighter">{myTicketData && myTicketData.queueString}</div>
+                    
+                    <p className="text-sm font-semibold text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full shadow-sm mb-3">
+                      คุณ {myTicketData && myTicketData.name} • {myTicketData && myTicketData.categoryName}
+                    </p>
+                    
+                    <div className="text-[10px] sm:text-xs text-slate-400 flex flex-wrap items-center justify-center gap-1 border-t border-indigo-100 pt-3">
+                      <span className="material-icons-round text-sm">schedule</span>
+                      <span>กดรับคิวเมื่อ: {formatDate(myTicketData.createdAt)} เวลา {formatTime(myTicketData.createdAt)}</span>
+                    </div>
+                  </div>
                   
-                  {/* 📌 เพิ่มการแสดงชื่อลูกค้าที่นี่ */}
-                  <p className="text-sm font-semibold text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full shadow-sm mb-3">
-                    คุณ {myTicketData && myTicketData.name} • {myTicketData && myTicketData.categoryName}
-                  </p>
+                  <div className="border border-slate-100 rounded-2xl p-4 sm:p-5 text-left space-y-4 bg-white">
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                      <span className="text-slate-500 font-medium flex items-center gap-2 text-sm sm:text-base">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-fast"></div>กำลังเรียก (รวม)
+                      </span>
+                      <span className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 font-medium text-sm sm:text-base">คิวของคุณรออีก</span>
+                      <span className="text-lg sm:text-2xl font-bold text-rose-500 bg-rose-50 px-3 py-1 rounded-lg">{queuesAhead} คิว</span>
+                    </div>
+                  </div>
                   
-                  <div className="text-[10px] sm:text-xs text-slate-400 flex flex-wrap items-center justify-center gap-1 border-t border-indigo-100 pt-3">
-                    <span className="material-icons-round text-sm">schedule</span>
-                    <span>กดรับคิวเมื่อ: {formatDate(myTicketData.createdAt)} เวลา {formatTime(myTicketData.createdAt)}</span>
-                  </div>
+                  <p className="text-[10px] sm:text-xs text-slate-400 mt-6">* คุณสามารถเปิดหน้านี้ทิ้งไว้เพื่อดูคิวแบบเรียลไทม์</p>
+                  <button onClick={() => { setMyTicketId(null); setMyTicketData(null); setShowAlert(false); setStep(1); }} className="mt-4 text-sm text-indigo-500 font-medium hover:underline">← กลับหน้าแรกเพื่อรับคิวใหม่</button>
                 </div>
-                
-                <div className="border border-slate-100 rounded-2xl p-4 sm:p-5 text-left space-y-4 bg-white">
-                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-slate-500 font-medium flex items-center gap-2 text-sm sm:text-base">
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-fast"></div>กำลังเรียก (รวม)
-                    </span>
-                    <span className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-medium text-sm sm:text-base">คิวของคุณรออีก</span>
-                    <span className="text-lg sm:text-2xl font-bold text-rose-500 bg-rose-50 px-3 py-1 rounded-lg">{queuesAhead} คิว</span>
-                  </div>
-                </div>
-                
-                <p className="text-[10px] sm:text-xs text-slate-400 mt-6">* คุณสามารถเปิดหน้านี้ทิ้งไว้เพื่อดูคิวแบบเรียลไทม์</p>
-                <button onClick={() => { setMyTicketId(null); setMyTicketData(null); setShowAlert(false); setStep(1); }} className="mt-4 text-sm text-indigo-500 font-medium hover:underline">← กลับหน้าแรกเพื่อรับคิวใหม่</button>
-              </div>
-            )}
-
-            {showAlert && (
-              <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100">
-                  <div className="w-16 sm:w-20 h-16 sm:h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                    <span className="material-icons-round text-3xl sm:text-4xl">campaign</span>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">ถึงคิวของคุณแล้ว!</h2>
-                  <div className="text-5xl sm:text-6xl font-extrabold text-indigo-600 my-3">{myTicketData && myTicketData.queueString}</div>
-                  <p className="text-base sm:text-lg font-semibold text-slate-700 bg-emerald-50 py-3 rounded-xl mb-6 text-emerald-700">
-                    เชิญที่ช่องบริการที่ <span className="text-xl sm:text-2xl font-black">{displayStatus.counter || 1}</span>
-                  </p>
-                  <button onClick={() => setShowAlert(false)} className="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition shadow-lg">
-                    รับทราบ
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+
+          {/* 📌 ย้าย Popup แจ้งเตือนลูกค้าออกมาด้านนอกสุด ทำให้ครอบคลุมทั้งหน้าจอ 100% */}
+          {showAlert && (
+            <div className="fixed top-0 left-0 w-full h-full bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[9999] p-4 animate-fade-in" style={{ margin: 0 }}>
+              <div className="bg-white rounded-[2rem] p-6 sm:p-10 max-w-sm w-full text-center shadow-2xl border border-slate-100 transform transition-all scale-100">
+                <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-lg">
+                  <span className="material-icons-round text-4xl">campaign</span>
+                </div>
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">ถึงคิวของคุณแล้ว!</h2>
+                <div className="text-6xl font-extrabold text-indigo-600 my-4 tracking-tighter drop-shadow-sm">{myTicketData && myTicketData.queueString}</div>
+                <p className="text-lg font-bold text-slate-700 bg-emerald-50 py-4 rounded-xl mb-8 border border-emerald-100">
+                  เชิญที่ช่องบริการที่ <span className="text-3xl text-emerald-600 font-black ml-1">{displayStatus.counter || 1}</span>
+                </p>
+                <button onClick={() => setShowAlert(false)} className="w-full bg-slate-800 text-white font-bold py-4 rounded-xl hover:bg-slate-900 transition shadow-xl text-lg">
+                  รับทราบ
+                </button>
+              </div>
+            </div>
+          )}
+        </React.Fragment>
       );
     };
 
