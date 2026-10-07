@@ -333,7 +333,6 @@
       const [categories, setCategories] = useState([]); 
       const [showQRModal, setShowQRModal] = useState(false);
       
-      // 📌 State สำหรับตัวกรองหมวดหมู่คิว
       const [queueFilter, setQueueFilter] = useState("ALL");
 
       useEffect(() => {
@@ -346,7 +345,6 @@
           }
         });
 
-        // โหลดหมวดหมู่มาใช้เป็นตัวกรอง
         const unsubCategories = db.collection('categories').onSnapshot(snapshot => {
           setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
@@ -357,10 +355,12 @@
       const currentCounterObj = counters.find(c => c.id === activeCounter);
       const isCurrentOpen = currentCounterObj ? currentCounterObj.isOpen !== false : true;
 
-      // 📌 กรองคิวรอตามที่เจ้าหน้าที่เลือก
       const filteredWaitingTickets = queueFilter === "ALL" 
         ? waitingTickets 
         : waitingTickets.filter(t => t.category === queueFilter);
+
+      // 📌 หาตั๋วคิวล่าสุดที่ถูกเรียกโดย "โต๊ะนี้"
+      const myLastCalledTicket = calledTickets.find(t => t.counter === activeCounter);
 
       const manageQueue = async (action, ticket) => {
         if (!isCurrentOpen) {
@@ -372,7 +372,6 @@
           if (action === 'CALL' || action === 'RECALL') {
             const now = Date.now();
             if (action === 'CALL') {
-              // 📌 บันทึกด้วยว่า โต๊ะไหน (counter) เป็นคนเรียกคิวนี้
               batch.update(db.collection('tickets').doc(ticket.id), { status: "called", calledAt: now, counter: activeCounter });
             } else if (action === 'RECALL') {
               batch.update(db.collection('tickets').doc(ticket.id), { calledAt: now, counter: activeCounter });
@@ -393,7 +392,6 @@
       };
 
       const handleCallNext = () => {
-        // 📌 เวลาเรียกคิวถัดไป ให้เรียกจากคิว "ที่ถูกกรองแล้ว" เท่านั้น
         if (filteredWaitingTickets.length > 0) manageQueue('CALL', filteredWaitingTickets[0]);
         else alert(queueFilter === "ALL" ? "ไม่มีคิวรอในขณะนี้" : "ไม่มีคิวรอในหมวดหมู่ที่เลือก");
       };
@@ -453,30 +451,50 @@
                 )}
               </div>
 
+              {/* 📌 กล่องควบคุมการเรียกคิวหลัก */}
               <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 mb-6">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
                   <span className="font-bold text-slate-700 text-sm sm:text-base">กำลังปฏิบัติงานที่: <span className="text-indigo-600 text-lg font-black">โต๊ะ {activeCounter}</span></span>
                   <span className={`inline-block text-center px-3 py-1 rounded-full text-xs font-bold w-fit ${isCurrentOpen ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
                     {isCurrentOpen ? 'พร้อมรับคิว' : 'โต๊ะนี้ปิดบริการอยู่'}
                   </span>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-3 text-center mb-4">
-                  <div className="bg-white p-3 rounded-xl border">
-                    <p className="text-[10px] sm:text-xs text-slate-400">เรียกล่าสุด</p>
-                    <p className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</p>
+                  <div className="bg-white p-3 rounded-xl border flex flex-col justify-center shadow-sm">
+                    <p className="text-[10px] sm:text-xs text-slate-400 mb-1">เรียกล่าสุด</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-800">{myLastCalledTicket ? myLastCalledTicket.queueString : "-"}</p>
                   </div>
-                  <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
-                    <p className="text-[10px] sm:text-xs text-indigo-500 font-medium">คิวรอในหมวดที่เลือก</p>
-                    <p className="text-xl sm:text-2xl font-bold text-indigo-600">{filteredWaitingTickets.length}</p>
+                  <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 flex flex-col justify-center shadow-sm">
+                    <p className="text-[10px] sm:text-xs text-indigo-500 font-medium mb-1">คิวรอในหมวดที่เลือก</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-indigo-600">{filteredWaitingTickets.length}</p>
                   </div>
                 </div>
+
+                {/* 📌 เพิ่มปุ่มจัดการ (เรียกซ้ำ/ข้ามคิว) แสดงเฉพาะเวลาที่มีคิวที่เพิ่งเรียกไป */}
+                {myLastCalledTicket && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <button 
+                      onClick={() => manageQueue('RECALL', myLastCalledTicket)}
+                      className="btn-scale bg-amber-400 text-white font-bold py-2.5 rounded-xl shadow-md hover:bg-amber-500 flex items-center justify-center gap-1 transition"
+                    >
+                      <span className="material-icons-round text-lg">campaign</span> เรียกซ้ำ
+                    </button>
+                    <button 
+                      onClick={() => manageQueue('SKIP', myLastCalledTicket)}
+                      className="btn-scale bg-rose-500 text-white font-bold py-2.5 rounded-xl shadow-md hover:bg-rose-600 flex items-center justify-center gap-1 transition"
+                    >
+                      <span className="material-icons-round text-lg">block</span> ข้ามคิวนี้
+                    </button>
+                  </div>
+                )}
 
                 <button 
                   onClick={handleCallNext} 
                   disabled={!isCurrentOpen}
                   className={`btn-scale w-full font-bold text-base sm:text-lg py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 ${isCurrentOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
                 >
-                  <span className="material-icons-round">campaign</span> เรียกคิวถัดไป <span className="hidden sm:inline">(สำหรับโต๊ะ {activeCounter})</span>
+                  <span className="material-icons-round">skip_next</span> เรียกคิวถัดไป <span className="hidden sm:inline">(สำหรับโต๊ะ {activeCounter})</span>
                 </button>
               </div>
 
@@ -494,7 +512,6 @@
                     <div className="flex flex-col">
                       <span className="font-bold text-slate-700 text-sm sm:text-base">
                         {t.queueString} 
-                        {/* 📌 แสดงว่าใครเรียก */}
                         <span className="text-indigo-500 ml-2 text-xs bg-indigo-50 px-2 py-0.5 rounded-md">โต๊ะ {t.counter || '-'}</span>
                       </span>
                       <span className="text-[10px] sm:text-xs text-slate-500 mt-1 truncate max-w-[150px]">{t.name}</span>
@@ -507,7 +524,6 @@
           </div>
 
           <div className="w-full lg:w-96 glass-card p-4 sm:p-6 rounded-[2rem] flex flex-col h-[400px] sm:h-[500px] lg:h-[700px]">
-            {/* 📌 ตัวกรองหมวดหมู่คิวรอ */}
             <div className="flex flex-col gap-2 mb-4 border-b border-slate-100 pb-4">
               <h2 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
                 <span className="material-icons-round text-emerald-500">list_alt</span> โซนคิวรอ
@@ -540,9 +556,9 @@
                         <div className="text-base sm:text-lg font-bold text-slate-800 truncate">{t.name}</div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => manageQueue('CALL', t)} className="btn-scale flex-1 bg-emerald-500 text-white py-2 rounded-xl font-semibold hover:bg-emerald-600 shadow-md text-xs sm:text-sm">เรียกโต๊ะ {activeCounter}</button>
-                      <button onClick={() => manageQueue('SKIP', t)} className="btn-scale flex-none bg-rose-50 text-rose-600 px-3 py-2 rounded-xl font-semibold hover:bg-rose-100 border border-rose-100 text-xs sm:text-sm">ข้าม</button>
+                    {/* 📌 นำปุ่ม "ข้าม" เดิมออกไปแล้ว ให้มีแค่ปุ่มเรียกคิวมาที่โต๊ะอย่างเดียว */}
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={() => manageQueue('CALL', t)} className="btn-scale w-full bg-emerald-500 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-600 shadow-md text-sm transition">เรียกคิวนี้มาที่โต๊ะ {activeCounter}</button>
                     </div>
                   </div>
                 ))
@@ -559,10 +575,10 @@
                   <img src={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.href.split('?')[0] + '?mode=kiosk')}`} alt="QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mx-auto mix-blend-multiply" />
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={handleDownloadQR} className="btn-scale bg-indigo-600 text-white font-bold px-4 py-3 sm:py-3.5 rounded-xl flex-1 hover:bg-indigo-700 text-sm sm:text-base flex items-center justify-center gap-1 shadow-md">
+                  <button onClick={handleDownloadQR} className="btn-scale bg-indigo-600 text-white font-bold px-4 py-3 sm:py-3.5 rounded-xl flex-1 hover:bg-indigo-700 text-sm sm:text-base flex items-center justify-center gap-1 shadow-md transition">
                     <span className="material-icons-round text-base">download</span> บันทึกภาพ
                   </button>
-                  <button onClick={() => setShowQRModal(false)} className="btn-scale bg-slate-100 text-slate-700 font-bold px-4 py-3 sm:py-3.5 rounded-xl flex-1 hover:bg-slate-200 text-sm sm:text-base">ปิดหน้าต่าง</button>
+                  <button onClick={() => setShowQRModal(false)} className="btn-scale bg-slate-100 text-slate-700 font-bold px-4 py-3 sm:py-3.5 rounded-xl flex-1 hover:bg-slate-200 text-sm sm:text-base transition">ปิดหน้าต่าง</button>
                 </div>
               </div>
             </div>
