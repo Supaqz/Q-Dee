@@ -110,14 +110,12 @@
               if (data.calledAt > prevCalledAt.current) {
                 setShowAlert(true);
                 
-                // 🔔 1. เล่นเสียงกระดิ่งสำหรับลูกค้า
                 const chime = document.getElementById('customer-chime');
                 if (chime) {
                   chime.currentTime = 0;
                   chime.play().catch(e => console.log("รอให้ลูกค้าแตะหน้าจอเพื่ออนุญาตเสียง", e));
                 }
 
-                // 📳 2. สั่นหน้าจอ (ทำงานเฉพาะบน Android, ส่วน iPhone จะมีแค่เสียง)
                 if (navigator.vibrate) {
                   navigator.vibrate([300, 100, 300, 100, 300]);
                 }
@@ -191,7 +189,6 @@
 
       return (
         <React.Fragment>
-          {/* 📌 เพิ่มซ่อน Audio ไว้ใช้สำหรับแจ้งเตือนลูกค้า */}
           <audio id="customer-chime" src="https://actions.google.com/sounds/v1/alarms/chime_bell_ding.ogg" preload="auto"></audio>
 
           <div className="animate-fade-in w-full max-w-md mx-auto pt-4 md:pt-10 pb-10">
@@ -262,18 +259,44 @@
                     </div>
                   </div>
                   
-                  <div className="border border-slate-100 rounded-2xl p-4 sm:p-5 text-left space-y-4 bg-white">
-                    <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                      <span className="text-slate-500 font-medium flex items-center gap-2 text-sm sm:text-base">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-fast"></div>กำลังเรียก (รวม)
-                      </span>
-                      <span className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</span>
+                  {/* 📌 ระบบแสดงหน้าจอย่อยตามสถานะของคิว */}
+                  {myTicketData.status === 'waiting' && (
+                    <div className="border border-slate-100 rounded-2xl p-4 sm:p-5 text-left space-y-4 bg-white">
+                      <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                        <span className="text-slate-500 font-medium flex items-center gap-2 text-sm sm:text-base">
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-fast"></div>กำลังเรียก (รวม)
+                        </span>
+                        <span className="text-xl sm:text-2xl font-bold text-slate-800">{displayStatus.currentQueue}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500 font-medium text-sm sm:text-base">คิวของคุณรออีก</span>
+                        <span className="text-lg sm:text-2xl font-bold text-rose-500 bg-rose-50 px-3 py-1 rounded-lg">{queuesAhead} คิว</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500 font-medium text-sm sm:text-base">คิวของคุณรออีก</span>
-                      <span className="text-lg sm:text-2xl font-bold text-rose-500 bg-rose-50 px-3 py-1 rounded-lg">{queuesAhead} คิว</span>
+                  )}
+
+                  {myTicketData.status === 'called' && (
+                    <div className="border-2 border-emerald-400 bg-emerald-50 rounded-2xl p-5 sm:p-6 text-center shadow-sm animate-fade-in">
+                      <h3 className="text-xl sm:text-2xl font-bold text-emerald-700 mb-2 flex items-center justify-center gap-2">
+                        <span className="material-icons-round">campaign</span> ถึงคิวของคุณแล้ว!
+                      </h3>
+                      <p className="text-slate-600 mb-4 text-sm sm:text-base font-medium">กรุณาติดต่อเจ้าหน้าที่ตามช่องบริการด้านล่าง</p>
+                      <div className="inline-block bg-emerald-600 text-white font-bold text-2xl sm:text-3xl px-6 py-3 rounded-2xl shadow-md">
+                        โต๊ะ / ช่องบริการ {myTicketData.counter || displayStatus.counter}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {myTicketData.status === 'skipped' && (
+                    <div className="border-2 border-rose-400 bg-rose-50 rounded-2xl p-5 sm:p-6 text-center shadow-sm animate-fade-in">
+                      <h3 className="text-xl sm:text-2xl font-bold text-rose-700 mb-2 flex items-center justify-center gap-2">
+                        <span className="material-icons-round">warning_amber</span> คิวของคุณผ่านไปแล้ว
+                      </h3>
+                      <p className="text-rose-600/80 text-sm sm:text-base font-medium leading-relaxed">
+                        เจ้าหน้าที่ทำการเรียกข้ามไปแล้ว<br/>กรุณาติดต่อเจ้าหน้าที่เพื่อสอบถาม<br/>หรือกดรับคิวใหม่อีกครั้ง
+                      </p>
+                    </div>
+                  )}
                   
                   <p className="text-[10px] sm:text-xs text-slate-400 mt-6">* คุณสามารถเปิดหน้านี้ทิ้งไว้เพื่อดูคิวแบบเรียลไทม์</p>
                   <button onClick={() => { setMyTicketId(null); setMyTicketData(null); setShowAlert(false); setStep(1); }} className="mt-4 text-sm text-indigo-500 font-medium hover:underline">← กลับหน้าแรกเพื่อรับคิวใหม่</button>
@@ -282,7 +305,6 @@
             </div>
           </div>
 
-          {/* 📌 ย้าย Popup แจ้งเตือนลูกค้าออกมาด้านนอกสุด ทำให้ครอบคลุมทั้งหน้าจอ 100% */}
           {showAlert && (
             <div className="fixed top-0 left-0 w-full h-full bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[9999] p-4 animate-fade-in" style={{ margin: 0 }}>
               <div className="bg-white rounded-[2rem] p-6 sm:p-10 max-w-sm w-full text-center shadow-2xl border border-slate-100 transform transition-all scale-100">
@@ -292,7 +314,7 @@
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">ถึงคิวของคุณแล้ว!</h2>
                 <div className="text-6xl font-extrabold text-indigo-600 my-4 tracking-tighter drop-shadow-sm">{myTicketData && myTicketData.queueString}</div>
                 <p className="text-lg font-bold text-slate-700 bg-emerald-50 py-4 rounded-xl mb-8 border border-emerald-100">
-                  เชิญที่ช่องบริการที่ <span className="text-3xl text-emerald-600 font-black ml-1">{displayStatus.counter || 1}</span>
+                  เชิญที่ช่องบริการที่ <span className="text-3xl text-emerald-600 font-black ml-1">{myTicketData.counter || displayStatus.counter || 1}</span>
                 </p>
                 <button onClick={() => setShowAlert(false)} className="w-full bg-slate-800 text-white font-bold py-4 rounded-xl hover:bg-slate-900 transition shadow-xl text-lg">
                   รับทราบ
