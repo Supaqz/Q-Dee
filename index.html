@@ -1134,8 +1134,6 @@
       const [promptValue, setPromptValue] = useState("");
       
       const [hideNavbar, setHideNavbar] = useState(false);
-      
-      // 📌 State ใหม่สำหรับควบคุมการเปิด/ปิด Sidebar บนมือถือ
       const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
       useEffect(() => {
@@ -1165,10 +1163,10 @@
         <div className="flex h-screen overflow-hidden">
           
           {/* ========================================== */}
-          {/* 📌 แถบเมนูด้านข้าง (Sidebar) สไตล์ YouTube */}
+          {/* 📌 แถบเมนูด้านข้าง (Sidebar) */}
           {/* ========================================== */}
           {!isIsolated && !hideNavbar && (
-            <>
+            <React.Fragment>
               {/* พื้นหลังสีดำจางๆ เวลาเปิดเมนูบนมือถือ */}
               {isSidebarOpen && (
                 <div 
@@ -1185,7 +1183,6 @@
                     <img src="https://cdn-icons-png.flaticon.com/512/2913/2913076.png" alt="Logo" className="w-8 h-8 object-contain" />
                     <span className="font-bold text-indigo-700 text-xl tracking-wide">Q-System</span>
                   </div>
-                  {/* ปุ่มกากบาทปิดเมนูสำหรับมือถือ */}
                   <button className="md:hidden text-slate-400 hover:text-rose-500 transition p-1" onClick={() => setIsSidebarOpen(false)}>
                     <span className="material-icons-round">close</span>
                   </button>
@@ -1216,12 +1213,11 @@
                   </button>
                 </nav>
                 
-                {/* ลายเซ็นต์เล็กๆ ด้านล่างสุดของเมนู */}
                 <div className="p-4 text-center text-[10px] text-slate-400 border-t border-slate-100 shrink-0">
                   Q-System Pro Max v2.0<br/>Smart Queue Management
                 </div>
               </aside>
-            </>
+            </React.Fragment>
           )}
 
           {/* ========================================== */}
@@ -1239,7 +1235,6 @@
               </header>
             )}
 
-            {/* ส่วนแสดงผลแต่ละหน้าต่าง */}
             <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 flex flex-col relative no-scrollbar">
               {view === 'kiosk' && <CustomerView displayStatus={displayStatus} allWaitingTickets={waitingTickets} />}
               {view === 'admin' && <AdminView displayStatus={displayStatus} waitingTickets={waitingTickets} calledTickets={calledTickets} />}
